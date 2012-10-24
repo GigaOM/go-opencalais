@@ -9,21 +9,21 @@ Author URI: http://sixohthree.com/
 License: GPL2
 */
 
-/*
+/********** begin config setup **************/
+$config = go_config()->load( 'go-opencalais' );
 
-define( 'GO_OPENCALAIS_KEY', 'your key here' );
+if ( $config['key'] )
+{
+	define( 'GO_OPENCALAIS_KEY', $config['key'] );
+}//end if
 
-define( 'GO_OPENCALAIS_THRESHOLD', 0.5 );
+if ( $config['threshold'] )
+{
+	define( 'GO_OPENCALAIS_THRESHOLD', $config['threshold'] );
+}//end if
 
-$GLOBALS['GO_OPENCALAIS_MAPPING'] = array(
-	// OpenCalas Tax         Local tax
-	'Company'             => 'company',
-	'Organization'        => 'company',
-
-	'Person'              => 'post_tag',
-);
-
-*/
+$GLOBALS['GO_OPENCALAIS_MAPPING'] = $config['mapping'] ?: array();
+/********** end config setup **************/
 
 require_once __DIR__ . '/components/class-go-opencalais.php';
 require_once __DIR__ . '/components/class-go-opencalais-enrich.php';
