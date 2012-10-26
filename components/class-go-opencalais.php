@@ -18,9 +18,10 @@ class GO_OpenCalais
 
 	public function action_admin_enqueue_scripts( $hook_suffix )
 	{
-		if ( 'post.php' != $hook_suffix ) {
+		if ( 'post.php' != $hook_suffix )
+		{
 			return;
-		}
+		}//end if
 
 		wp_enqueue_script( 'go_opencalais', plugins_url( 'js/go-oc.js', __FILE__ ), 'jquery', 1, true );
 		wp_enqueue_style( 'go_opencalais_css', plugins_url( 'css/go-oc.css', __FILE__ ), null, 1 );
@@ -98,7 +99,7 @@ class GO_OpenCalais
 			$clean_tags = array();
 			foreach ( $tags as $tag )
 			{
-				$tag = substr( trim( $tag ) , 0 , self::TAG_LENGTH );
+				$tag = substr( trim( $tag ), 0, self::TAG_LENGTH );
 				$clean_tags[] = wp_filter_nohtml_kses( $tag );
 
 				if ( count($clean_tags) > self::IGNORED_TAGS )
@@ -119,6 +120,22 @@ class GO_OpenCalais
 		$meta['ignored'] = $ignore;
 		update_post_meta( $post_id, 'go_oc_settings', $meta );
 	}//end action_save_post
+
+	protected function ajax_error( $message )
+	{
+		if( is_wp_error( $message ) )
+		{
+			$message = $message->get_error_message();
+		}//end if
+
+		echo json_encode(
+			array(
+				'error' => $message,
+			)
+		);
+
+		die();
+	}//end ajax_error
 
 	/**
 	 *
@@ -151,7 +168,7 @@ class GO_OpenCalais
 		}//end foreach
 
 		return $response;
-	}//end filter_response_threshold
+	}//end filter_normalize_relevance
 
 	/**
 	 *
@@ -217,12 +234,12 @@ class GO_OpenCalais
 
 		if ( null === $post_id )
 		{
-			$this->_ajax_error( "post id was not provided" );
+			$this->ajax_error( "post id was not provided" );
 		}//end if
 
 		if( ! ( $post = get_post( $post_id ) ) )
 		{
-			$this->_ajax_error( "invalid post id $post_id" );
+			$this->ajax_error( "invalid post id $post_id" );
 		}//end if
 
 		// temporary content override
@@ -236,35 +253,19 @@ class GO_OpenCalais
 		$result = $enrich->enrich();
 		if( is_wp_error( $result ) )
 		{
-			$this->_ajax_error( $result );
+			$this->ajax_error( $result );
 		}//end if
 
 		$result = $enrich->save();
 		if( is_wp_error( $result ) )
 		{
-			$this->_ajax_error( $result );
+			$this->ajax_error( $result );
 		}//end if
 
 		echo json_encode( $enrich->response );
 
 		die();
 	}//end wp_ajax_go_oc_enrich
-
-	protected function _ajax_error( $message )
-	{
-		if( is_wp_error( $message ) )
-		{
-			$message = $message->get_error_message();
-		}//end if
-
-		echo json_encode(
-			array(
-				'error' => $message,
-			)
-		);
-
-		die();
-	}//end _ajax_error
 
 	/**
 	 *

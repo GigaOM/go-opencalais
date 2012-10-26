@@ -23,7 +23,7 @@ class GO_OpenCalais_AutoTagger
 	public function __construct()
 	{
 		$this->hooks();
-	}//end construct
+	}//end __construct
 
 	public function autotag_batch()
 	{
@@ -97,7 +97,7 @@ class GO_OpenCalais_AutoTagger
 			echo '<hr>';
 			echo '<h2><a href="', esc_attr( get_edit_post_link() ), '">', get_the_title(), '</a> (#', get_the_ID(), ')</h2>';
 
-			$taxes = $this->_autotag_post( $post );
+			$taxes = $this->autotag_post( $post );
 			if( is_wp_error( $taxes ) )
 			{
 				echo "<span style='color:red'>ERROR:</span> ", $taxes->get_error_message();
@@ -167,42 +167,7 @@ class GO_OpenCalais_AutoTagger
 		die;
 	}//end autotag_batch
 
-	public function go_oc_content( $content , $post_id , $post )
-	{
-		$term_list = get_the_term_list( $post_id , 'post_tag' , '' , '; ', '' );
-
-		if ( ! empty( $term_list ) && ! is_wp_error( $term_list ) )
-		{
-			$content = $content . "\n  \n" . (string) strip_tags( $term_list );
-		}//end if
-
-		return $post->post_title ."\n  \n". $post->post_excerpt ."\n  \n". $content;
-	}//end go_oc_content
-
-	public function hooks()
-	{
-		add_action( 'wp_ajax_oc_autotag', array( $this, 'autotag_batch' ) );
-		add_action( 'init', array( $this, 'init' ) );
-		add_action( 'go_oc_content', array( $this, 'go_oc_content' ) , 5 , 3 );
-	}//end hooks
-
-	public function init()
-	{
-		if( ! taxonomy_exists( 'go_utility_tag' ) )
-		{
-			register_taxonomy( 'go_utility_tag', 'post' , array( 'label' => 'GO Utility Tag' ) );
-		}//end if
-
-		if ( is_admin() )
-		{
-			if( ! term_exists( self::AT_TERM , self::AT_TAX ))
-			{
-				wp_insert_term( self::AT_TERM , self::AT_TAX );
-			}//end if
-		}//end if
-	}//end init
-
-	protected function _autotag_post( $post )
+	protected function autotag_post( $post )
 	{
 		global $GO_OPENCALAIS_MAPPING;
 
@@ -217,7 +182,7 @@ class GO_OpenCalais_AutoTagger
 			// matter? (I'm getting this error for an auto-draft, and its
 			// causing the queue to have a recurring item that never
 			// gets tagged.)
-			$this->_mark_autotagged( $post );
+			$this->mark_autotagged( $post );
 
 			return $error;
 		}//end if
@@ -282,17 +247,52 @@ class GO_OpenCalais_AutoTagger
 		// append terms to the post
 		foreach( $valid_terms as $tax => $terms )
 		{
-			wp_set_object_terms( $post->ID, $terms , $tax, true );
+			wp_set_object_terms( $post->ID, $terms, $tax, true );
 		}//end foreach
 
-		$this->_mark_autotagged( $post );
+		$this->mark_autotagged( $post );
 
 		return $taxes;
-	}//end _autotag_post
+	}//end autotag_post
 
-	protected function _mark_autotagged( $post )
+	public function go_oc_content( $content , $post_id , $post )
+	{
+		$term_list = get_the_term_list( $post_id, 'post_tag', '', '; ', '' );
+
+		if ( ! empty( $term_list ) && ! is_wp_error( $term_list ) )
+		{
+			$content = $content . "\n  \n" . (string) strip_tags( $term_list );
+		}//end if
+
+		return $post->post_title ."\n  \n". $post->post_excerpt ."\n  \n". $content;
+	}//end go_oc_content
+
+	public function hooks()
+	{
+		add_action( 'wp_ajax_oc_autotag', array( $this, 'autotag_batch' ) );
+		add_action( 'init', array( $this, 'init' ) );
+		add_action( 'go_oc_content', array( $this, 'go_oc_content' ), 5, 3 );
+	}//end hooks
+
+	public function init()
+	{
+		if( ! taxonomy_exists( 'go_utility_tag' ) )
+		{
+			register_taxonomy( 'go_utility_tag', 'post', array( 'label' => 'GO Utility Tag' ) );
+		}//end if
+
+		if ( is_admin() )
+		{
+			if( ! term_exists( self::AT_TERM, self::AT_TAX ))
+			{
+				wp_insert_term( self::AT_TERM, self::AT_TAX );
+			}//end if
+		}//end if
+	}//end init
+
+	protected function mark_autotagged( $post )
 	{
 		// mark this record as tagged
 		return wp_set_object_terms( $post->ID, self::AT_TERM, self::AT_TAX, true );
-	}//end _mark_autotagged
+	}//end mark_autotagged
 }//end class

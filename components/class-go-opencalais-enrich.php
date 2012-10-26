@@ -23,11 +23,11 @@ class GO_OpenCalais_Enrich
 	public function __construct( $post )
 	{
 		$this->post = $post;
-	}//end constructor
+	}//end __construct
 
 	public function enrich()
 	{
-		$content = apply_filters( 'go_oc_content', $this->post->post_content, $this->post->ID , $this->post );
+		$content = apply_filters( 'go_oc_content', $this->post->post_content, $this->post->ID, $this->post );
 
 		if ( empty( $content ))
 		{
@@ -66,7 +66,7 @@ class GO_OpenCalais_Enrich
 		}//end elseif
 
 		$this->response_raw = (array) json_decode( $response_body );
-		$this->response     = apply_filters( 'go_oc_response', $this->response_raw, $this->post->ID , $this->post );
+		$this->response     = apply_filters( 'go_oc_response', $this->response_raw, $this->post->ID, $this->post );
 	}//end enrich
 
 	public function save()
@@ -82,4 +82,4 @@ class GO_OpenCalais_Enrich
 		$meta['enrich_unfiltered'] = json_encode( $this->response_raw );
 		update_post_meta( $this->post->ID, 'go_oc_settings', $meta );
 	}//end save
-}//end class go_opencalais_enrich
+}//end class

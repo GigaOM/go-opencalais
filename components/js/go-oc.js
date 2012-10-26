@@ -176,7 +176,7 @@ function tag_refresh(e) {
 		post_id = $('#post_ID').val();
 
 	content = tinyMCE.activeEditor.getContent( { format: 'raw' } );
-	
+
 	params = {
 		'action': 'go_oc_enrich',
 		'content': content,
