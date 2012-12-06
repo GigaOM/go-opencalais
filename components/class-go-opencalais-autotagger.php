@@ -278,17 +278,18 @@ class GO_OpenCalais_AutoTagger
 	{
 		if( ! taxonomy_exists( 'go_utility_tag' ) )
 		{
-			register_taxonomy( 
-				'go_utility_tag', 
-				'post', 
-				array( 
+			register_taxonomy(
+				'go_utility_tag',
+				'post',
+				array(
 					'label'   => 'GO Utility Tag',
-					'rewrite' => array( 
+					'show_ui' => FALSE,
+					'rewrite' => array(
 						'slug'         => 'go_utility_tag',
-						'with_front'   => FALSE, 
-	                    'hierarchical' => FALSE, 
-	                    'ep_mask'      => EP_TAGS, 
-					), 
+						'with_front'   => FALSE,
+	                    'hierarchical' => FALSE,
+	                    'ep_mask'      => EP_TAGS,
+					),
 				)
 			);
 		}//end if
