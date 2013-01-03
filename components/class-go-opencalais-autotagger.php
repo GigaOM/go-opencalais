@@ -29,7 +29,7 @@ class GO_OpenCalais_AutoTagger
 	{
 		global $post, $wp_version, $wpdb;
 
-		if( ! current_user_can( 'manage_options') )
+		if ( ! current_user_can( 'manage_options') )
 		{
 			die( 'no access' );
 		}//end if
@@ -40,12 +40,12 @@ class GO_OpenCalais_AutoTagger
 		$posts_per_page = isset( $_REQUEST['posts_per_page'] ) ? (int) $_REQUEST['posts_per_page'] : self::PER_PAGE;
 
 		// sanity check
-		if( $posts_per_page > 20 )
+		if ( $posts_per_page > 20 )
 		{
 			$posts_per_page = 20;
 		}//end if
 
-		if( version_compare( $wp_version, '3.1', '>=' ) )
+		if ( version_compare( $wp_version, '3.1', '>=' ) )
 		{
 			$tax_query = array(
 				array(
@@ -85,7 +85,7 @@ class GO_OpenCalais_AutoTagger
 		}//end else
 
 		// subsequent ajax loads
-		if( ! isset( $_REQUEST['more'] ) )
+		if ( ! isset( $_REQUEST['more'] ) )
 		{
 			echo '<h1>OpenCalais Bulk Auto-tagger</h1>';
 		}//end if
@@ -121,7 +121,7 @@ class GO_OpenCalais_AutoTagger
 						$first = false;
 					}//end if
 
-					if( $term['usable'] )
+					if ( $term['usable'] )
 					{
 						$term['term'] = '<strong>' . $term['term'] .' <small>('. $term['rel'] . ')</small> </strong>';
 					}//end if
@@ -138,12 +138,12 @@ class GO_OpenCalais_AutoTagger
 			echo '</ul>';
 		}//end foreach
 
-		if( count($posts) > 0 )
+		if ( count($posts) > 0 )
 		{
 			// first time through, load jquery and create reload function
 			if( ! isset( $_REQUEST['more'] ) ): ?>
 			<div id="more"><a href="">Loading more in 5 seconds&hellip;</a></div>
-			<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 			<script type="text/javascript">
 			var do_oc_refresh = function() {
 				$.get( document.location.href, {'more':1}, function( data, ts, xhr ) {
@@ -174,7 +174,7 @@ class GO_OpenCalais_AutoTagger
 		$enrich = new go_opencalais_enrich( $post );
 
 		$error = $enrich->enrich();
-		if( is_wp_error( $error ) )
+		if ( is_wp_error( $error ) )
 		{
 			// FIXME: this is imperfect. what if the content was empty
 			// as the result of a bogus filter, or some other error?
@@ -188,7 +188,7 @@ class GO_OpenCalais_AutoTagger
 		}//end if
 
 		$error = $enrich->save();
-		if( is_wp_error( $error ) )
+		if ( is_wp_error( $error ) )
 		{
 			return $error;
 		}//end if
@@ -206,7 +206,7 @@ class GO_OpenCalais_AutoTagger
 
 		foreach( $enrich->response as $obj )
 		{
-			if( ! isset( $obj->relevance ) )
+			if ( ! isset( $obj->relevance ) )
 			{
 				continue;
 			}//end if
@@ -219,19 +219,19 @@ class GO_OpenCalais_AutoTagger
 			$usable    = $rel > $this->threshold;
 
 			// does this type map to a local taxonomy?
-			if( isset( $GO_OPENCALAIS_MAPPING[$type] ) )
+			if ( isset( $GO_OPENCALAIS_MAPPING[$type] ) )
 			{
 				$local_tax = $GO_OPENCALAIS_MAPPING[$type];
 			}//end if
 
-			if( ! isset( $taxes[$type] ) )
+			if ( ! isset( $taxes[$type] ) )
 			{
 				$taxes[$type] = array();
 			}//end if
 
 			$taxes[$type][$term] = compact( 'rel', 'rel_orig', 'local_tax', 'usable', 'term' );
 
-			if( $usable && $local_tax )
+			if ( $usable && $local_tax )
 			{
 				if( ! isset( $valid_terms[$local_tax] ) )
 				{
@@ -276,7 +276,7 @@ class GO_OpenCalais_AutoTagger
 
 	public function init()
 	{
-		if( ! taxonomy_exists( 'go_utility_tag' ) )
+		if ( ! taxonomy_exists( 'go_utility_tag' ) )
 		{
 			register_taxonomy(
 				'go_utility_tag',
@@ -296,7 +296,7 @@ class GO_OpenCalais_AutoTagger
 
 		if ( is_admin() )
 		{
-			if( ! term_exists( self::AT_TERM, self::AT_TAX ))
+			if ( ! term_exists( self::AT_TERM, self::AT_TAX ))
 			{
 				wp_insert_term( self::AT_TERM, self::AT_TAX );
 			}//end if
