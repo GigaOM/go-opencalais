@@ -270,6 +270,7 @@ class GO_OpenCalais_AutoTagger
 	public function hooks()
 	{
 		add_action( 'wp_ajax_oc_autotag', array( $this, 'autotag_batch' ) );
+		add_action( 'wp_ajax_oc_autotag_update', array( $this, 'update' ) );
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'go_oc_content', array( $this, 'go_oc_content' ), 5, 3 );
 	}//end hooks
@@ -293,15 +294,25 @@ class GO_OpenCalais_AutoTagger
 				)
 			);
 		}//end if
+	}// end init
 
-		if ( is_admin() )
+	public function update()
+	{
+		if ( ! current_user_can( 'manage_options' ) )
 		{
-			if ( ! term_exists( self::AT_TERM, self::AT_TAX ))
-			{
-				wp_insert_term( self::AT_TERM, self::AT_TAX );
-			}//end if
+			die( 'no access' );
 		}//end if
-	}//end init
+
+		if ( ! term_exists( self::AT_TERM, self::AT_TAX ) )
+		{
+			wp_insert_term( self::AT_TERM, self::AT_TAX );
+			echo 'updated term ';
+		}//end if
+		else
+		{
+			echo 'no updates needed ';
+		}// end else
+	}//end update
 
 	protected function mark_autotagged( $post )
 	{

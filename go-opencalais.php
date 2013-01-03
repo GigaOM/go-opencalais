@@ -7,6 +7,7 @@ Version: 0.1
 Author: Adam Backstrom for GigaOM
 Author URI: http://sixohthree.com/
 License: GPL2
+After upgrade/install, please run: /wp-admin/admin-ajax.php?action=oc_autotag_update
 */
 
 /*
