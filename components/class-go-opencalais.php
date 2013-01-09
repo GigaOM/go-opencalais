@@ -98,14 +98,6 @@ class GO_OpenCalais
 			return;
 		}// end if
 
-		// Check the nonce
-		/* @TODO: what nonce can/should we check?
-		if ( ! $this->verify_nonce( $this->post_type_name . '-save-post' ) )
-		{
-			return;
-		}// end if
-		*/
-
 		// Check the permissions
 		if ( ! current_user_can( 'edit_post' , $post->ID  ) )
 		{
