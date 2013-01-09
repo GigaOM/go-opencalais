@@ -73,10 +73,44 @@ class GO_OpenCalais
 	 */
 	public function action_save_post( $post_id, $post )
 	{
-		if ( 'post' !== $post->post_type )
+		// Check that this isn't an autosave
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
 		{
 			return;
-		}//end if
+		}// end if
+
+		$post = get_post( $post_id );
+		if ( ! is_object( $post ) )
+		{
+			return;
+		}// end if
+
+		// check post type matches what you intend
+		$whitelisted_post_types = array( 'post' );
+		if ( ! isset( $post->post_type ) || ! in_array( $whitelisted_post_types ) )
+		{
+			return;
+		}// end if
+
+		// Don't run on post revisions (almost always happens just before the real post is saved)
+		if ( wp_is_post_revision( $post->ID ) )
+		{
+			return;
+		}// end if
+
+		// Check the nonce
+		/* @TODO: what nonce can/should we check?
+		if ( ! $this->verify_nonce( $this->post_type_name . '-save-post' ) )
+		{
+			return;
+		}// end if
+		*/
+
+		// Check the permissions
+		if ( ! current_user_can( 'edit_post' , $post->ID  ) )
+		{
+			return;
+		}// end if
 
 		if ( ! isset( $_POST['tax_ignore'] ) || ! is_array( $_POST['tax_ignore'] ) )
 		{
