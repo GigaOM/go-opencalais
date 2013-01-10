@@ -87,7 +87,7 @@ class GO_OpenCalais
 
 		// check post type matches what you intend
 		$whitelisted_post_types = array( 'post' );
-		if ( ! isset( $post->post_type ) || ! in_array( $whitelisted_post_types ) )
+		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $whitelisted_post_types ) )
 		{
 			return;
 		}// end if
