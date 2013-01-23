@@ -99,7 +99,7 @@ class GO_OpenCalais
 		}// end if
 
 		// Check the permissions
-		if ( ! current_user_can( 'edit_post' , $post->ID  ) )
+		if ( ! current_user_can( 'edit_post', $post->ID  ) )
 		{
 			return;
 		}// end if
@@ -155,9 +155,7 @@ class GO_OpenCalais
 		}//end if
 
 		echo json_encode(
-			array(
-				'error' => $message,
-			)
+			array( 'error' => $message, )
 		);
 
 		die();
@@ -260,7 +258,7 @@ class GO_OpenCalais
 
 		if ( null === $post_id )
 		{
-			$this->ajax_error( "post id was not provided" );
+			$this->ajax_error( 'post id was not provided' );
 		}//end if
 
 		if( ! ( $post = get_post( $post_id ) ) )

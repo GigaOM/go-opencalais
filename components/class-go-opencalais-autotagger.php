@@ -13,7 +13,7 @@ class GO_OpenCalais_AutoTagger
 {
 	// The term we'll attach to autotagged posts.
 	const AT_TERM = 'go-oc-autotagged';
-	const AT_TAX = 'go_utility_tag';
+	const AT_TAX  = 'go_utility_tag';
 
 	// posts per page
 	const PER_PAGE = 5;
@@ -115,7 +115,7 @@ class GO_OpenCalais_AutoTagger
 					{
 						echo '<li>';
 						$local_tax = ( isset( $term['local_tax'] ) && $term['local_tax'] ) ? $term['local_tax'] : false;
-						$color = $local_tax ? 'green' : 'red';
+						$color     = $local_tax ? 'green' : 'red';
 						echo "<span style='font-weight:bold;color:$color'>$tax", ( $local_tax ? " ($local_tax)" : '' ),
 							'</span> ';
 						$first = false;
@@ -255,7 +255,7 @@ class GO_OpenCalais_AutoTagger
 		return $taxes;
 	}//end autotag_post
 
-	public function go_oc_content( $content , $post_id , $post )
+	public function go_oc_content( $content, $post_id, $post )
 	{
 		$term_list = get_the_term_list( $post_id, 'post_tag', '', '; ', '' );
 
