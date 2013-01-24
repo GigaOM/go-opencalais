@@ -10,8 +10,8 @@ function go_oc_extras_init()
 			'rewrite'      => array(
 				'slug'         => 'company',
 				'with_front'   => FALSE,
-	            'hierarchical' => FALSE,
-	            'ep_mask'      => EP_TAGS,
+				'hierarchical' => FALSE,
+				'ep_mask'      => EP_TAGS,
 			),
 		)
 	);
@@ -24,8 +24,8 @@ function go_oc_extras_init()
 			'rewrite'      => array(
 				'slug'         => 'technology',
 				'with_front'   => FALSE,
-	            'hierarchical' => FALSE,
-	            'ep_mask'      => EP_TAGS,
+				'hierarchical' => FALSE,
+				'ep_mask'      => EP_TAGS,
 			),
 		)
 	);

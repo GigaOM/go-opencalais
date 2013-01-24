@@ -155,7 +155,9 @@ class GO_OpenCalais
 		}//end if
 
 		echo json_encode(
-			array( 'error' => $message, )
+			array(
+				'error' => $message,
+			)
 		);
 
 		die();
