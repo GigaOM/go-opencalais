@@ -16,6 +16,21 @@ class GO_OpenCalais
 		$this->hooks();
 	}//end __construct
 
+	public function config( $config )
+	{
+		if ( $config['key'] )
+		{
+			define( 'GO_OPENCALAIS_KEY', $config['key'] );
+		}//end if
+		
+		if ( $config['threshold'] )
+		{
+			define( 'GO_OPENCALAIS_THRESHOLD', $config['threshold'] );
+		}//end if
+		
+		$GLOBALS['GO_OPENCALAIS_MAPPING'] = $config['mapping'] ?: array();
+	}// end config
+
 	public function action_admin_enqueue_scripts( $hook_suffix )
 	{
 		if ( 'post.php' != $hook_suffix )
@@ -307,3 +322,15 @@ class GO_OpenCalais
 		return true;
 	}//end _filter_response_threshold
 }//end class
+
+function go_opencalais()
+{
+	global $go_opencalais;
+	
+	if ( ! isset( $go_opencalais ) )
+	{
+		$go_opencalais = new GO_OpenCalais();
+	}// end if
+
+	return $go_opencalais;
+}// end go_opencalais
