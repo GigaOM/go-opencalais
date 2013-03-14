@@ -13,21 +13,25 @@ class GO_OpenCalais
 	 */
 	public function __construct()
 	{
+		$this->config( apply_filters( 'go_config', array(), 'go-opencalais' ) );
 		$this->hooks();
 	}//end __construct
 
+	/**
+	 * Configure the plugin
+	 */
 	public function config( $config )
 	{
 		if ( $config['key'] )
 		{
 			define( 'GO_OPENCALAIS_KEY', $config['key'] );
 		}//end if
-		
+
 		if ( $config['threshold'] )
 		{
 			define( 'GO_OPENCALAIS_THRESHOLD', $config['threshold'] );
 		}//end if
-		
+
 		$GLOBALS['GO_OPENCALAIS_MAPPING'] = $config['mapping'] ?: array();
 	}// end config
 
@@ -326,7 +330,7 @@ class GO_OpenCalais
 function go_opencalais()
 {
 	global $go_opencalais;
-	
+
 	if ( ! isset( $go_opencalais ) )
 	{
 		$go_opencalais = new GO_OpenCalais();
