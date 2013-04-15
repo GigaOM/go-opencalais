@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: GO OpenCalais
+Plugin Name: GigaOM OpenCalais
 Plugin URI:
 Description:
 Version: 0.1
