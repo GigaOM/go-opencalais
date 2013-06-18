@@ -145,9 +145,9 @@ class GO_OpenCalais
 			foreach ( $tags as $tag )
 			{
 				$tag = substr( trim( $tag ), 0, self::TAG_LENGTH );
-				$clean_tags[] = wp_filter_nohtml_kses( $tag );
+				$clean_tags[] = wp_kses( $tag, array() );
 
-				if ( count($clean_tags) > self::IGNORED_TAGS )
+				if ( count( $clean_tags ) > self::IGNORED_TAGS )
 				{
 					break;
 				}//end if
