@@ -282,6 +282,11 @@ class GO_OpenCalais
 			$this->ajax_error( 'post id was not provided' );
 		}//end if
 
+		if ( ! current_user_can( 'edit_post' , $post_id ) )
+		{
+			$this->ajax_error( "no permission to edit post $post_id" );
+		} // END if
+
 		if( ! ( $post = get_post( $post_id ) ) )
 		{
 			$this->ajax_error( "invalid post id $post_id" );
