@@ -40,6 +40,7 @@ class GO_OpenCalais_Enrich
 				'X-calais-licenseID' => GO_OPENCALAIS_KEY,
 				'Accept'             => 'application/json',
 				'Content-type'       => 'text/html',
+				'enableMetadataType' => 'SocialTags',
 			),
 		);
 
