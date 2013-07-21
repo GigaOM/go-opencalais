@@ -19,7 +19,7 @@ class GO_OpenCalais
 	// runs on init
 	public function init()
 	{
-		// best not to run this on __construct(), 
+		// best not to run this on __construct(),
 		// as the chain calls go_opencalais()
 		$this->admin();
 	}//end init
