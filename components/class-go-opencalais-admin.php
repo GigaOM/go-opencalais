@@ -1,39 +1,59 @@
 <?php
 
-class GO_OpenCalais
+class GO_OpenCalais_Admin
 {
-	// Max length of an ignored tag (used during sanitization)
-	const TAG_LENGTH = 100;
 
-	// Max number of ignored tags per taxonomy
-	const IGNORED_TAGS = 30;
+	public $config = array(
+		'api_key' => FALSE,
+		'confidence_threshold_default' => '.3',
+		'max_tag_length' => 100,
+		'max_ignored_tags' => 30,
+		'mapping' => array(
+			// 'Open Calais entity name' => 'WordPress taxonomy',
+			'socialTag' => 'post_tag',
+		),
+		// Not configured by default, as it requires a custom taxonomy to track its progress
+		// 'autotagger' => array(
+		//		'taxonomy' => 'utility_taxonomy',
+		//		'term' => 'go-opencalais-autotagged',
+		//		'per_page' => 5,
+		// ),
+	);
+
+	private $enrich_loaded = FALSE;
 
 	/**
 	 * constructor
 	 */
 	public function __construct()
 	{
-		$this->config( apply_filters( 'go_config', array(), 'go-opencalais' ) );
-		$this->hooks();
+		$this->config = apply_filters( 'go_config', array(), 'go-opencalais' );
+		// check to see if the API is set and we have mappings befor adding hooks
+		if ( isset( $this->config['api_key'], $this->config['mapping'] ) )
+		{
+			add_action( 'init', array( $this, 'init' ), 2 );
+		}
+		// @TODO: add an else condition that gets noisy about the config being incorrect
+
 	}//end __construct
 
-	/**
-	 * Configure the plugin
-	 */
-	public function config( $config )
+	public function init()
 	{
-		if ( $config['key'] )
-		{
-			define( 'GO_OPENCALAIS_KEY', $config['key'] );
-		}//end if
+		add_action( 'admin_enqueue_scripts', array( $this, 'action_admin_enqueue_scripts' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'action_admin_footer_post' ) );
+		add_action( 'wp_ajax_go_oc_css', array( $this, 'wp_ajax_go_oc_css' ) );
+		add_action( 'wp_ajax_go_oc_enrich', array( $this, 'wp_ajax_go_oc_enrich' ) );
+		add_action( 'save_post', array( $this, 'action_save_post' ), 10, 2 );
 
-		if ( $config['threshold'] )
-		{
-			define( 'GO_OPENCALAIS_THRESHOLD', $config['threshold'] );
-		}//end if
+		add_filter( 'go_oc_response', array( $this, 'filter_normalize_relevance' ), 5 );
+		add_filter( 'go_oc_response', array( $this, 'filter_response_threshold' ), 10 );
 
-		$GLOBALS['GO_OPENCALAIS_MAPPING'] = $config['mapping'] ?: array();
-	}// end config
+		// check if the autotagger is configged before loading it
+		if ( is_array( $this->config['autotagger'] ) )
+		{
+			go_opencalais()->autotagger();
+		}
+	}//end init
 
 	public function action_admin_enqueue_scripts( $hook_suffix )
 	{
@@ -42,21 +62,21 @@ class GO_OpenCalais
 			return;
 		}//end if
 
-		wp_enqueue_script( 'go_opencalais', plugins_url( 'js/go-oc.js', __FILE__ ), 'jquery', 1, true );
-		wp_enqueue_style( 'go_opencalais_css', plugins_url( 'css/go-oc.css', __FILE__ ), null, 1 );
-		wp_enqueue_style( 'go_opencalais_dyn_css', admin_url( 'admin-ajax.php?action=go_oc_css' ), null, 1 );
+		wp_enqueue_script( 'go_opencalais', plugins_url( 'js/go-oc.js', __FILE__ ), 'jquery', 1, TRUE );
+		wp_enqueue_style( 'go_opencalais_css', plugins_url( 'css/go-oc.css', __FILE__ ), NULL, 1 );
+		wp_enqueue_style( 'go_opencalais_dyn_css', admin_url( 'admin-ajax.php?action=go_oc_css' ), NULL, 1 );
 	}//end action_admin_enqueue_scripts
 
 	public function action_admin_footer_post( $hook_suffix )
 	{
-		global $action, $post, $GO_OPENCALAIS_MAPPING;
+		global $action, $post;
 
 		if ( 'edit' !== $action )
 		{
 			return;
 		}//end if
 
-		$meta = (array) get_post_meta( $post->ID, 'go_oc_settings', true );
+		$meta = (array) get_post_meta( $post->ID, 'go_oc_settings', TRUE );
 
 		if ( ! isset( $meta['ignored'] ))
 		{
@@ -67,7 +87,7 @@ class GO_OpenCalais
 
 		// Sanitize taxonomy mapping
 		$mapping = array();
-		foreach ( $GO_OPENCALAIS_MAPPING as $remote => $local )
+		foreach ( $this->config['mapping'] as $remote => $local )
 		{
 			// valid local taxonomy and clean remote taxonomy
 			if ( ! taxonomy_exists( $local ) || ! preg_match( '/^[a-z]{1,50}$/i', $remote ) )
@@ -75,7 +95,7 @@ class GO_OpenCalais
 				continue;
 			}//end if
 
-			$mapping[$remote] = $local;
+			$mapping[ $remote ] = $local;
 		}//end foreach
 
 		?>
@@ -144,19 +164,19 @@ class GO_OpenCalais
 			$clean_tags = array();
 			foreach ( $tags as $tag )
 			{
-				$tag = substr( trim( $tag ), 0, self::TAG_LENGTH );
+				$tag = substr( trim( $tag ), 0, $this->config['max_tag_length'] );
 				$clean_tags[] = wp_kses( $tag, array() );
 
-				if ( count( $clean_tags ) > self::IGNORED_TAGS )
+				if ( count( $clean_tags ) > $this->config['max_ignored_tags'] )
 				{
 					break;
 				}//end if
 			}//end foreach
 
-			$ignore[$tax] = $clean_tags;
+			$ignore[ $tax ] = $clean_tags;
 		}//end foreach
 
-		$meta = (array) get_post_meta( $post_id, 'go_oc_settings', true );
+		$meta = (array) get_post_meta( $post_id, 'go_oc_settings', TRUE );
 		if( empty($meta) )
 		{
 			$meta = array();
@@ -220,21 +240,8 @@ class GO_OpenCalais
 	 */
 	public function filter_response_threshold( $response )
 	{
-		$this->threshold = apply_filters( 'go_oc_threshold', defined( 'GO_OPENCALAIS_THRESHOLD' ) ? GO_OPENCALAIS_THRESHOLD : .1 );
 		return array_filter( $response, array( $this, '_filter_response_threshold' ) );
 	}//end filter_response_threshold
-
-	public function hooks()
-	{
-		add_action( 'admin_enqueue_scripts', array( $this, 'action_admin_enqueue_scripts' ) );
-		add_action( 'admin_footer-post.php', array( $this, 'action_admin_footer_post' ) );
-		add_action( 'wp_ajax_go_oc_css', array( $this, 'wp_ajax_go_oc_css' ) );
-		add_action( 'wp_ajax_go_oc_enrich', array( $this, 'wp_ajax_go_oc_enrich' ) );
-		add_action( 'save_post', array( $this, 'action_save_post' ), 10, 2 );
-
-		add_filter( 'go_oc_response', array( $this, 'filter_normalize_relevance' ), 5 );
-		add_filter( 'go_oc_response', array( $this, 'filter_response_threshold' ), 10 );
-	}//end hooks
 
 	/**
 	 * Predictable path for CSS declarations that reference admin media.
@@ -264,8 +271,8 @@ class GO_OpenCalais
 		header( 'Content-type: application/json' );
 
 		// content may be passed in via POST
-		$content = null;
-		$post_id = null;
+		$content = NULL;
+		$post_id = NULL;
 
 		if ( isset( $_REQUEST['content'] ) )
 		{
@@ -277,7 +284,7 @@ class GO_OpenCalais
 			$post_id = absint( $_REQUEST['post_id'] );
 		}//end if
 
-		if ( null === $post_id )
+		if ( NULL === $post_id )
 		{
 			$this->ajax_error( 'post id was not provided' );
 		}//end if
@@ -298,7 +305,7 @@ class GO_OpenCalais
 			$post->post_content = $content;
 		}//end if
 
-		$enrich = new go_opencalais_enrich( $post );
+		$enrich = $this->new_enrich_obj( $post );
 
 		$result = $enrich->enrich();
 		if( is_wp_error( $result ) )
@@ -314,8 +321,21 @@ class GO_OpenCalais
 
 		echo json_encode( $enrich->response );
 
-		die();
+		die;
 	}//end wp_ajax_go_oc_enrich
+
+
+	// a singleton for the admin object
+	public function new_enrich_obj( $post )
+	{
+		if ( ! $this->enrich_loaded )
+		{
+			require_once __DIR__ . '/class-go-opencalais-enrich.php';
+			$this->enrich_loaded = TRUE;
+		}
+
+		return new GO_OpenCalais_Enrich( $post );
+	} // END admin
 
 	/**
 	 *
@@ -324,22 +344,10 @@ class GO_OpenCalais
 	{
 		if( isset( $member->relevance ) )
 		{
-			return $member->relevance > $this->threshold;
+			return $member->relevance > $this->config['confidence_threshold_default'];
 		}//end if
 
 		// if there was no relevance, just let it through
-		return true;
+		return TRUE;
 	}//end _filter_response_threshold
 }//end class
-
-function go_opencalais()
-{
-	global $go_opencalais;
-
-	if ( ! isset( $go_opencalais ) )
-	{
-		$go_opencalais = new GO_OpenCalais();
-	}// end if
-
-	return $go_opencalais;
-}// end go_opencalais
