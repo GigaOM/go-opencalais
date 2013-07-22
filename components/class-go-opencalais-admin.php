@@ -301,10 +301,16 @@ class GO_OpenCalais_Admin
 				{
 
 					// check if there's an authority record for this term
-					if( $authority = authority_record()->get_term_authority( $input_term ) )
+					if( $authority = authority_record()->get_term_authority( $term ) )
 					{
 						// set the suggested name to match the authoritative term name
 						$response[ $k ]->name = $authority->primary_term->name;
+
+						// replace the entity type to match the authority, if we have a mapping
+						if ( $new_type = array_search( $authority->primary_term->taxonomy, $this->config['mapping'] ) )
+						{
+							$response[ $k ]->_type = $new_type;
+						}
 					}
 					else
 					{
