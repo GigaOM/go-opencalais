@@ -5,7 +5,7 @@ class GO_OpenCalais_Admin
 
 	public $config = array(
 		'api_key' => FALSE,
-		'confidence_threshold_default' => '.3',
+		'confidence_threshold_default' => 0,
 		'max_tag_length' => 100,
 		'max_ignored_tags' => 30,
 		'mapping' => array(
@@ -45,8 +45,9 @@ class GO_OpenCalais_Admin
 		add_action( 'wp_ajax_go_oc_enrich', array( $this, 'wp_ajax_go_oc_enrich' ) );
 		add_action( 'save_post', array( $this, 'action_save_post' ), 10, 2 );
 
-		add_filter( 'go_oc_response', array( $this, 'filter_normalize_relevance' ), 5 );
-		add_filter( 'go_oc_response', array( $this, 'filter_response_threshold' ), 10 );
+		add_filter( 'go_oc_response', array( $this, 'filter_insert_socialtags_as_entities' ), 1 );
+		add_filter( 'go_oc_response', array( $this, 'filter_normalize_relevance' ), 3 );
+		add_filter( 'go_oc_response', array( $this, 'filter_response_threshold' ), 7 );
 
 		// check if the autotagger is configged before loading it
 		if ( is_array( $this->config['autotagger'] ) )
@@ -202,9 +203,43 @@ class GO_OpenCalais_Admin
 		die();
 	}//end ajax_error
 
-	/**
-	 *
-	 */
+
+	// insert socialTags as entities when there's no other entity wit the same value
+	public function filter_insert_socialtags_as_entities( $response )
+	{
+
+		// get the list of all entites and tags
+		$tags = $entities = array();
+		foreach ( $response as $k => $v )
+		{
+			if ( isset( $v->_typeGroup, $v->name ) )
+			{
+				switch ( $v->_typeGroup )
+				{
+					case 'socialTag':
+						$tags[ $k ] = $v->name;
+						break;
+					case 'entities':
+						$entities[ $k ] = $v->name;
+						break;
+					default:
+						break;
+
+				}
+			}
+
+		}
+
+		// identify the unqique tags and insert additional elements so they can be treated as entities
+		foreach ( array_diff( $tags, $entities ) as $k => $v )
+		{
+			$response[ $k ]->_type = 'socialTag';
+			$response[ $k ]->relevance = (float) '0.6';
+		}
+
+		return $response;
+	}//end filter_insert_socialtags_as_entities
+
 	public function filter_normalize_relevance( $response )
 	{
 		$max_relevance = 0;
@@ -328,6 +363,12 @@ class GO_OpenCalais_Admin
 	// a singleton for the admin object
 	public function new_enrich_obj( $post )
 	{
+		// fail if the config isn't set
+		if ( ! isset( $this->config['api_key'], $this->config['mapping'] ) )
+		{
+			return FALSE;
+		}
+
 		if ( ! $this->enrich_loaded )
 		{
 			require_once __DIR__ . '/class-go-opencalais-enrich.php';
