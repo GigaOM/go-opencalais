@@ -79,7 +79,7 @@ class GO_OpenCalais_Admin
 
 		$meta = (array) get_post_meta( $post->ID, 'go_oc_settings', TRUE );
 
-		if ( ! isset( $meta['ignored'] ))
+		if ( ! isset( $meta['ignored'] ) )
 		{
 			$meta['ignored'] = array();
 		}//end if
@@ -178,7 +178,7 @@ class GO_OpenCalais_Admin
 		}//end foreach
 
 		$meta = (array) get_post_meta( $post_id, 'go_oc_settings', TRUE );
-		if( empty($meta) )
+		if ( empty($meta) )
 		{
 			$meta = array();
 		}//end if
@@ -189,7 +189,7 @@ class GO_OpenCalais_Admin
 
 	protected function ajax_error( $message )
 	{
-		if( is_wp_error( $message ) )
+		if ( is_wp_error( $message ) )
 		{
 			$message = $message->get_error_message();
 		}//end if
@@ -247,7 +247,7 @@ class GO_OpenCalais_Admin
 		// first, find max
 		foreach( $response as $object )
 		{
-			if( isset( $object->relevance ) && $object->relevance > $max_relevance )
+			if ( isset( $object->relevance ) && $object->relevance > $max_relevance )
 			{
 				$max_relevance = $object->relevance;
 			}//end if
@@ -256,7 +256,7 @@ class GO_OpenCalais_Admin
 		// then normalize
 		foreach( $response as &$object )
 		{
-			if( isset( $object->relevance ) )
+			if ( isset( $object->relevance ) )
 			{
 				$object->_go_orig_relevance = $object->relevance;
 
@@ -329,13 +329,13 @@ class GO_OpenCalais_Admin
 			$this->ajax_error( "no permission to edit post $post_id" );
 		} // END if
 
-		if( ! ( $post = get_post( $post_id ) ) )
+		if ( ! ( $post = get_post( $post_id ) ) )
 		{
 			$this->ajax_error( "invalid post id $post_id" );
 		}//end if
 
 		// temporary content override
-		if( $content )
+		if ( $content )
 		{
 			$post->post_content = $content;
 		}//end if
@@ -343,13 +343,13 @@ class GO_OpenCalais_Admin
 		$enrich = $this->new_enrich_obj( $post );
 
 		$result = $enrich->enrich();
-		if( is_wp_error( $result ) )
+		if ( is_wp_error( $result ) )
 		{
 			$this->ajax_error( $result );
 		}//end if
 
 		$result = $enrich->save();
-		if( is_wp_error( $result ) )
+		if ( is_wp_error( $result ) )
 		{
 			$this->ajax_error( $result );
 		}//end if
@@ -383,7 +383,7 @@ class GO_OpenCalais_Admin
 	 */
 	public function _filter_response_threshold( $member )
 	{
-		if( isset( $member->relevance ) )
+		if ( isset( $member->relevance ) )
 		{
 			return $member->relevance > $this->config['confidence_threshold_default'];
 		}//end if
