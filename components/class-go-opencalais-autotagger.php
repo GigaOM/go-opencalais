@@ -11,18 +11,16 @@ License: GPL2
 
 class GO_OpenCalais_AutoTagger
 {
-	// The term we'll attach to autotagged posts.
-	const AT_TERM = 'go-oc-autotagged';
-	const AT_TAX  = 'go_utility_tag';
-
-	// posts per page
-	const PER_PAGE = 5;
 
 	protected $threshold = 0.29;
 
 	public function __construct()
 	{
-		$this->hooks();
+		$this->config = go_opencalais()->admin()->config;
+
+		add_action( 'wp_ajax_oc_autotag', array( $this, 'autotag_batch' ) );
+		add_action( 'wp_ajax_oc_autotag_update', array( $this, 'update' ) );
+		add_action( 'go_oc_content', array( $this, 'go_oc_content' ), 5, 3 );
 	}//end __construct
 
 	public function autotag_batch()
@@ -37,7 +35,7 @@ class GO_OpenCalais_AutoTagger
 		// any updates to the default threshold?
 		$this->threshold = apply_filters( 'go_oc_autotag_threshold', $this->threshold );
 
-		$posts_per_page = isset( $_REQUEST['posts_per_page'] ) ? (int) $_REQUEST['posts_per_page'] : self::PER_PAGE;
+		$posts_per_page = isset( $_REQUEST['posts_per_page'] ) ? (int) $_REQUEST['posts_per_page'] : $this->config['autotagger']['per_page'];
 
 		// sanity check
 		if ( $posts_per_page > 20 )
@@ -49,9 +47,9 @@ class GO_OpenCalais_AutoTagger
 		{
 			$tax_query = array(
 				array(
-					'taxonomy' => self::AT_TAX,
+					'taxonomy' => $this->config['autotagger']['taxonomy'],
 					'field'    => 'slug',
-					'terms'    => self::AT_TERM,
+					'terms'    => $this->config['autotagger']['term'],
 					'operator' => 'NOT IN',
 				),
 			);
@@ -70,7 +68,7 @@ class GO_OpenCalais_AutoTagger
 		}//end if
 		else
 		{
-			$term = get_term_by( 'slug', self::AT_TERM, self::AT_TAX );
+			$term = get_term_by( 'slug', $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'] );
 			$term_taxonomy_id = $term ? $term->term_taxonomy_id : -1;
 			$posts = $wpdb->get_col( $sql = $wpdb->prepare( "
 				SELECT p.ID
@@ -169,8 +167,6 @@ class GO_OpenCalais_AutoTagger
 
 	protected function autotag_post( $post )
 	{
-		global $GO_OPENCALAIS_MAPPING;
-
 		$enrich = new go_opencalais_enrich( $post );
 
 		$error = $enrich->enrich();
@@ -196,12 +192,12 @@ class GO_OpenCalais_AutoTagger
 		// Array of all incoming suggested tags, regardless of relevancy
 		// or taxonomy.
 		//
-		//     $taxes[$tax][$term] = array( 'rel' => N, 'rel_orig' => N )
+		//     $taxes[ $tax ][ $term ] = array( 'rel' => N, 'rel_orig' => N )
 		$taxes = array();
 
 		// Terms to use, by local taxonomy.
 		//
-		//     $valid_terms[$local_tax] = array( $term [ , $term, ... ] )
+		//     $valid_terms[ $local_tax ] = array( $term [ , $term, ... ] )
 		$valid_terms = array();
 
 		foreach( $enrich->response as $obj )
@@ -219,26 +215,26 @@ class GO_OpenCalais_AutoTagger
 			$usable    = $rel > $this->threshold;
 
 			// does this type map to a local taxonomy?
-			if ( isset( $GO_OPENCALAIS_MAPPING[$type] ) )
+			if ( isset( $this->config['mapping'][ $type ] ) )
 			{
-				$local_tax = $GO_OPENCALAIS_MAPPING[$type];
+				$local_tax = $this->config['mapping'][ $type ];
 			}//end if
 
-			if ( ! isset( $taxes[$type] ) )
+			if ( ! isset( $taxes[ $type ] ) )
 			{
-				$taxes[$type] = array();
+				$taxes[ $type ] = array();
 			}//end if
 
-			$taxes[$type][$term] = compact( 'rel', 'rel_orig', 'local_tax', 'usable', 'term' );
+			$taxes[ $type ][ $term ] = compact( 'rel', 'rel_orig', 'local_tax', 'usable', 'term' );
 
 			if ( $usable && $local_tax )
 			{
-				if( ! isset( $valid_terms[$local_tax] ) )
+				if( ! isset( $valid_terms[ $local_tax ] ) )
 				{
-					$valid_terms[$local_tax] = array();
+					$valid_terms[ $local_tax ] = array();
 				}//end if
 
-				$valid_terms[$local_tax][] = $term;
+				$valid_terms[ $local_tax ][] = $term;
 			}//end if
 		}//end foreach
 
@@ -267,35 +263,6 @@ class GO_OpenCalais_AutoTagger
 		return $post->post_title ."\n  \n". $post->post_excerpt ."\n  \n". $content;
 	}//end go_oc_content
 
-	public function hooks()
-	{
-		add_action( 'wp_ajax_oc_autotag', array( $this, 'autotag_batch' ) );
-		add_action( 'wp_ajax_oc_autotag_update', array( $this, 'update' ) );
-		add_action( 'init', array( $this, 'init' ) );
-		add_action( 'go_oc_content', array( $this, 'go_oc_content' ), 5, 3 );
-	}//end hooks
-
-	public function init()
-	{
-		if ( ! taxonomy_exists( 'go_utility_tag' ) )
-		{
-			register_taxonomy(
-				'go_utility_tag',
-				'post',
-				array(
-					'label'   => 'GO Utility Tag',
-					'show_ui' => FALSE,
-					'rewrite' => array(
-						'slug'         => 'go_utility_tag',
-						'with_front'   => FALSE,
-	                    'hierarchical' => FALSE,
-	                    'ep_mask'      => EP_TAGS,
-					),
-				)
-			);
-		}//end if
-	}// end init
-
 	public function update()
 	{
 		if ( ! current_user_can( 'manage_options' ) )
@@ -303,9 +270,9 @@ class GO_OpenCalais_AutoTagger
 			die( 'no access' );
 		}//end if
 
-		if ( ! term_exists( self::AT_TERM, self::AT_TAX ) )
+		if ( ! term_exists( $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'] ) )
 		{
-			wp_insert_term( self::AT_TERM, self::AT_TAX );
+			wp_insert_term( $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'] );
 			echo 'updated term ';
 		}//end if
 		else
@@ -317,6 +284,6 @@ class GO_OpenCalais_AutoTagger
 	protected function mark_autotagged( $post )
 	{
 		// mark this record as tagged
-		return wp_set_object_terms( $post->ID, self::AT_TERM, self::AT_TAX, true );
+		return wp_set_object_terms( $post->ID, $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'], true );
 	}//end mark_autotagged
 }//end class

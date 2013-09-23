@@ -37,9 +37,10 @@ class GO_OpenCalais_Enrich
 		$args = array(
 			'body'    => $content,
 			'headers' => array(
-				'X-calais-licenseID' => GO_OPENCALAIS_KEY,
+				'X-calais-licenseID' => go_opencalais()->admin()->config['api_key'],
 				'Accept'             => 'application/json',
 				'Content-type'       => 'text/html',
+				'enableMetadataType' => 'SocialTags',
 			),
 		);
 
