@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: GO OpenCalais Autotagger
+ * Plugin Name: Gigaom OpenCalais Autotagger
  * Plugin URI:
  * Description:
  * Version: 0.1
