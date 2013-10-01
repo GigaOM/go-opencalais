@@ -16,7 +16,9 @@ class GO_OpenCalais
 		}
 	}//end __construct
 
-	// runs on init
+	/**
+	 * runs on init
+	 */
 	public function init()
 	{
 		// best not to run this on __construct(),
@@ -24,7 +26,9 @@ class GO_OpenCalais
 		$this->admin();
 	}//end init
 
-	// a singleton for the admin object
+	/**
+	 * a singleton for the admin object
+	 */
 	public function admin()
 	{
 		if ( ! $this->admin )
@@ -36,13 +40,17 @@ class GO_OpenCalais
 		return $this->admin;
 	} // END admin
 
-	// a singleton for the enrich object
+	/**
+	 * a singleton for the enrich object
+	 */
 	public function new_enrich_obj( $post )
 	{
 		return $this->admin()->new_enrich_obj( $post );
 	} // END enrich
 
-	// a singleton for the autotagger object
+	/**
+	 * a singleton for the autotagger object
+	 */
 	public function autotagger()
 	{
 		if ( ! $this->autotagger )
@@ -53,12 +61,10 @@ class GO_OpenCalais
 			// also load the admin object, in case it hasn't already been loaded
 			$this->admin();
 
-		}
+		}// end if
 
 		return $this->autotagger;
-	} // END admin
-
-
+	} // END autotagger
 }//end class
 
 function go_opencalais()

@@ -84,8 +84,6 @@ class GO_OpenCalais_Admin
 			$meta['ignored'] = array();
 		}//end if
 
-		$ignored = json_encode( $meta['ignored'] );
-
 		// Sanitize taxonomy mapping
 		$mapping = array();
 		foreach ( $this->config['mapping'] as $remote => $local )
@@ -101,7 +99,7 @@ class GO_OpenCalais_Admin
 
 		?>
 		<script type="text/javascript">
-		go_oc_ignored_tags = <?php echo $ignored; ?>;
+		go_oc_ignored_tags = <?php echo json_encode( $meta['ignored'] ); ?>;
 		go_oc_taxonomy_map = <?php echo json_encode( $mapping ); ?>;
 		</script>
 		<?php
@@ -203,8 +201,9 @@ class GO_OpenCalais_Admin
 		die();
 	}//end ajax_error
 
-
-	// insert socialTags as entities when there's no other entity wit the same value
+	/**
+	 * insert socialTags as entities when there's no other entity wit the same value
+	 */
 	public function filter_insert_socialtags_as_entities( $response )
 	{
 
@@ -225,10 +224,10 @@ class GO_OpenCalais_Admin
 					default:
 						break;
 
-				}
-			}
+				}// end switch
+			}// end if
 
-		}
+		}// end foreach
 
 		// identify the unqique tags and insert additional elements so they can be treated as entities
 		foreach ( array_diff( $tags, $entities ) as $k => $v )
@@ -324,7 +323,7 @@ class GO_OpenCalais_Admin
 			$this->ajax_error( 'post id was not provided' );
 		}//end if
 
-		if ( ! current_user_can( 'edit_post' , $post_id ) )
+		if ( ! current_user_can( 'edit_post', $post_id ) )
 		{
 			$this->ajax_error( "no permission to edit post $post_id" );
 		} // END if
@@ -359,8 +358,9 @@ class GO_OpenCalais_Admin
 		die;
 	}//end wp_ajax_go_oc_enrich
 
-
-	// a singleton for the admin object
+	/**
+ 	 * a singleton for the admin object
+ 	 */
 	public function new_enrich_obj( $post )
 	{
 		// fail if the config isn't set
@@ -376,7 +376,7 @@ class GO_OpenCalais_Admin
 		}
 
 		return new GO_OpenCalais_Enrich( $post );
-	} // END admin
+	} // END new_enrich_obj
 
 	/**
 	 *
