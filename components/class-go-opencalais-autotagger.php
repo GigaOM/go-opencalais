@@ -1,13 +1,13 @@
 <?php
-/*
-Plugin Name: GO OpenCalais Autotagger
-Plugin URI:
-Description:
-Version: 0.1
-Author: Adam Backstrom for GigaOM
-Author URI: http://sixohthree.com/
-License: GPL2
-*/
+/**
+ * Plugin Name: Gigaom OpenCalais Autotagger
+ * Plugin URI:
+ * Description:
+ * Version: 0.1
+ * Author: Adam Backstrom for Gigaom
+ * Author URI: http://sixohthree.com/
+ * License: GPL2
+ */
 
 class GO_OpenCalais_AutoTagger
 {
@@ -114,21 +114,21 @@ class GO_OpenCalais_AutoTagger
 						echo '<li>';
 						$local_tax = ( isset( $term['local_tax'] ) && $term['local_tax'] ) ? $term['local_tax'] : false;
 						$color     = $local_tax ? 'green' : 'red';
-						echo "<span style='font-weight:bold;color:$color'>$tax", ( $local_tax ? " ($local_tax)" : '' ),
+						echo "<span style='font-weight:bold;color:$color'>", esc_html( $tax ), ( $local_tax ? " ($local_tax)" : '' ),
 							'</span> ';
 						$first = false;
 					}//end if
 
 					if ( $term['usable'] )
 					{
-						$term['term'] = '<strong>' . $term['term'] .' <small>('. $term['rel'] . ')</small> </strong>';
+						$term['term'] = '<strong>' . esc_html( $term['term'] ) . ' <small>(' . esc_html( $term['rel'] ) . ')</small> </strong>';
 					}//end if
 					else
 					{
-						$term['term'] = '<small>' . $term['term'] .' <small>('. $term['rel'] . ')</small></small>';
+						$term['term'] = '<small>' . esc_html( $term['term'] ) . ' <small>(' . esc_html( $term['rel'] ) . ')</small></small>';
 					}//end else
 
-					echo $term['term'], '; ';
+					echo esc_html( $term['term'] ), '; ';
 				}//end foreach
 				echo '</li>';
 			}//end foreach
@@ -139,23 +139,27 @@ class GO_OpenCalais_AutoTagger
 		if ( count($posts) > 0 )
 		{
 			// first time through, load jquery and create reload function
-			if( ! isset( $_REQUEST['more'] ) ): ?>
-			<div id="more"><a href="">Loading more in 5 seconds&hellip;</a></div>
-			<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-			<script type="text/javascript">
-			var do_oc_refresh = function() {
-				$.get( document.location.href, {'more':1}, function( data, ts, xhr ) {
-					$('#more').before( data );
-					if( 'done' == data ) {
-						$('#more').remove();
-					} else {
-						setTimeout( do_oc_refresh, 5000 );
-					}
+			if ( ! isset( $_REQUEST['more'] ) )
+			{
+				?>
+				<div id="more"><a href="">Loading more in 5 seconds&hellip;</a></div>
+				<script type="text/javascript">
+				jQuery( function() {
+					var do_oc_refresh = function() {
+						jQuery.get( document.location.href, {'more':1}, function( data, ts, xhr ) {
+							jQuery('#more').before( data );
+							if( 'done' == data ) {
+								jQuery('#more').remove();
+							} else {
+								setTimeout( do_oc_refresh, 5000 );
+							}
+						});
+					};
+					setTimeout( do_oc_refresh, 5000 );
 				});
-			};
-			setTimeout( do_oc_refresh, 5000 );
-			</script>
-			<?php endif;
+				</script>
+				<?php
+			}//end if
 		}//end if
 		else
 		{
