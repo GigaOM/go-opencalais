@@ -312,6 +312,16 @@ class GO_OpenCalais_Admin
 	 */
 	public function wp_ajax_go_oc_enrich()
 	{
+
+		// Check nonce
+		if (
+			! isset( $_REQUEST['nonce'] ) ||
+			! wp_verify_nonce( $_REQUEST['nonce'], 'go-opencalais' )
+		)
+		{
+			wp_die( 'Either you\'re mistaken or cheating.', 'Bad, bad!' );
+		}// end if
+
 		header( 'Content-type: application/json' );
 
 		// content may be passed in via POST

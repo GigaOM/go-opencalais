@@ -139,7 +139,8 @@ function tags_toggle(e) {
 function oc_enrich( post_id ) {
 	var params = {
 		'action': 'go_oc_enrich',
-		'post_id': post_id
+		'post_id': post_id,
+		'nonce': go_oc_nonce
 	};
 
 	$.getJSON( ajaxurl, params, oc_enrich_cb );
