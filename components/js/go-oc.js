@@ -21,7 +21,7 @@ var tmpl_tag = '<span><a class="go-oc-ignore" title="Ignore tag">X</a>&nbsp;<a c
 
 function oc_ignored_tags() {
 
-	html = tmpl_nonce.replace( /{{nonce}}/g, go_oc_nonce );
+	var html = tmpl_nonce.replace( /{{nonce}}/g, go_oc_nonce );
 	$( '#post input:first' ).after( html );
 
 	var tags = $('.the-tags');
