@@ -63,7 +63,7 @@ class GO_OpenCalais_Admin
 			return;
 		}//end if
 
-		wp_enqueue_script( 'go_opencalais', plugins_url( 'js/go-oc.js', __FILE__ ), 'jquery', 1, TRUE );
+		wp_enqueue_script( 'go_opencalais', plugins_url( 'js/go-oc.js', __FILE__ ), array( 'jquery' ), 2, TRUE );
 		wp_enqueue_style( 'go_opencalais_css', plugins_url( 'css/go-oc.css', __FILE__ ), NULL, 1 );
 		wp_enqueue_style( 'go_opencalais_dyn_css', admin_url( 'admin-ajax.php?action=go_oc_css' ), NULL, 1 );
 	}//end action_admin_enqueue_scripts
@@ -99,8 +99,9 @@ class GO_OpenCalais_Admin
 
 		?>
 		<script type="text/javascript">
-		go_oc_ignored_tags = <?php echo json_encode( $meta['ignored'] ); ?>;
-		go_oc_taxonomy_map = <?php echo json_encode( $mapping ); ?>;
+		var go_oc_nonce = '<?php echo esc_js( wp_create_nonce( 'go-opencalais' ) ); ?>';
+		var go_oc_ignored_tags = <?php echo json_encode( $meta['ignored'] ); ?>;
+		var go_oc_taxonomy_map = <?php echo json_encode( $mapping ); ?>;
 		</script>
 		<?php
 	}//end action_admin_footer_post
@@ -111,13 +112,22 @@ class GO_OpenCalais_Admin
 	 */
 	public function action_save_post( $post_id, $post )
 	{
+
+		// Check nonce
+		if (
+			! isset( $_POST['go-oc-nonce'] ) ||
+			! wp_verify_nonce( $_POST['go-oc-nonce'], 'go-opencalais' )
+		)
+		{
+			return;
+		}// end if
+
 		// Check that this isn't an autosave
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
 		{
 			return;
 		}// end if
 
-		$post = get_post( $post_id );
 		if ( ! is_object( $post ) )
 		{
 			return;
@@ -302,6 +312,16 @@ class GO_OpenCalais_Admin
 	 */
 	public function wp_ajax_go_oc_enrich()
 	{
+
+		// Check nonce
+		if (
+			! isset( $_REQUEST['nonce'] ) ||
+			! wp_verify_nonce( $_REQUEST['nonce'], 'go-opencalais' )
+		)
+		{
+			wp_die( 'Either you\'re mistaken or cheating.', 'Bad, bad!' );
+		}// end if
+
 		header( 'Content-type: application/json' );
 
 		// content may be passed in via POST

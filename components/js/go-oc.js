@@ -13,11 +13,17 @@ var tmpl = '<div><a href="#" class="go-oc-taggroup go-oc-suggested">Suggested Ta
 	'<div><a href="#" class="go-oc-taggroup go-oc-ignored">Ignored Tags</a>' +
 	'<div style="display:none;" class="go-oc-taglist go-oc-ignored-list"></div></div>';
 
+// @TODO: these field names and IDs don't fit our code standards
+var tmpl_nonce = '<input type="hidden" id="go-oc-nonce" name="go-oc-nonce" value="{{nonce}}"> ';
 var tmpl_ignore = '<textarea name="tax_ignore[{{tax}}]" class="the-ignored-tags" id="tax-ignore-{{tax}}"></textarea>';
 
 var tmpl_tag = '<span><a class="go-oc-ignore" title="Ignore tag">X</a>&nbsp;<a class="go-oc-use">{{name}}</a></span>';
 
 function oc_ignored_tags() {
+
+	var html = tmpl_nonce.replace( /{{nonce}}/g, go_oc_nonce );
+	$( '#post input:first' ).after( html );
+
 	var tags = $('.the-tags');
 
 	$.each( tags, function(){
@@ -133,7 +139,8 @@ function tags_toggle(e) {
 function oc_enrich( post_id ) {
 	var params = {
 		'action': 'go_oc_enrich',
-		'post_id': post_id
+		'post_id': post_id,
+		'nonce': go_oc_nonce
 	};
 
 	$.getJSON( ajaxurl, params, oc_enrich_cb );
