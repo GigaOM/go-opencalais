@@ -2,6 +2,8 @@
 
 class GO_OpenCalais
 {
+	private $autotagger = NULL;
+	private $admin = NULL;
 
 	/**
 	 * constructor
