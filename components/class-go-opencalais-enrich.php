@@ -2,7 +2,7 @@
 
 class GO_OpenCalais_Enrich
 {
-	const OC_URL = 'http://api.opencalais.com/tag/rs/enrich';
+	public $api_url = 'http://api.opencalais.com/tag/rs/enrich';
 
 	/**
 	 * The post we're enriching.
@@ -27,7 +27,7 @@ class GO_OpenCalais_Enrich
 
 	public function enrich()
 	{
-		$content = apply_filters( 'go_oc_content', $this->post->post_content, $this->post->ID, $this->post );
+		$content = apply_filters( 'go_opencalais_content', $post->post_title . "\n\n" . $post->post_excerpt . "\n\n" . $post->post_content, $this->post );
 
 		if ( empty( $content ))
 		{
@@ -37,14 +37,14 @@ class GO_OpenCalais_Enrich
 		$args = array(
 			'body'    => $content,
 			'headers' => array(
-				'X-calais-licenseID' => go_opencalais()->admin()->config['api_key'],
+				'X-calais-licenseID' => go_opencalais()->config( 'api_key' ),
 				'Accept'             => 'application/json',
 				'Content-type'       => 'text/html',
 				'enableMetadataType' => 'SocialTags',
 			),
 		);
 
-		$response         = wp_remote_post( self::OC_URL, $args );
+		$response         = wp_remote_post( $this->api_url, $args );
 		$response_code    = wp_remote_retrieve_response_code( $response );
 		$response_message = wp_remote_retrieve_response_message( $response );
 		$response_body    = wp_remote_retrieve_body( $response );
@@ -67,7 +67,7 @@ class GO_OpenCalais_Enrich
 		}//end elseif
 
 		$this->response_raw = (array) json_decode( $response_body );
-		$this->response     = apply_filters( 'go_oc_response', $this->response_raw, $this->post->ID, $this->post );
+		$this->response     = apply_filters( 'go_opencalais_response', $this->response_raw, $this->post->ID, $this->post );
 	}//end enrich
 
 	public function save()
