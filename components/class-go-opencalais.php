@@ -3,6 +3,7 @@
 class GO_OpenCalais
 {
 	public $slug = 'go-opencalais';
+	public $post_meta_key = 'go-opencalais';
 	public $autotagger = NULL;
 	public $admin = NULL;
 	public $config = NULL;
@@ -121,6 +122,19 @@ class GO_OpenCalais
 
 		return $local_taxonomies;
 	} // END get_local_taxonomies
+
+	/**
+	 * Get post meta
+	 */
+	public function get_post_meta( $post_id )
+	{
+		if ( ! $meta = get_post_meta( $post_id, $this->post_meta_key, TRUE ) )
+		{
+			return array();
+		} // END if
+
+		return $meta;
+	} // END get_post_meta
 }//end class
 
 function go_opencalais()

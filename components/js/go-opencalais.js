@@ -39,6 +39,11 @@
 					taxonomy: taxonomy,
 					ignored_taxonomies: go_opencalais.ignored_by_tax[ taxonomy ].join( ',' )
 				}) ).insertAfter( this );
+			} else if ( go_opencalais.local_taxonomies.hasOwnProperty( taxonomy ) ) {
+				$( go_opencalais.templates.ignore({
+					taxonomy: taxonomy,
+					ignored_taxonomies: ''
+				}) ).insertAfter( this );
 			}
 		});
 	};
@@ -168,27 +173,28 @@
 	};
 
 	// Toggle a suggested tag
-	// @TODO This one could still use a little code cleanup but it does function as is.
 	go_opencalais.tag_ignore = function( e ) {
-		var $tag = $( this ).parent(),
-			$inside = $tag.closest( '.inside' ),
-			$ignored = $inside.find( '.go-opencalais-ignored-list '),
-			tags = $inside.find( '.the-ignored-tags' ),
-			taxonomy = $inside.find( '.tagsdiv' ).attr( 'id' ),
-			tagsval, newtags, text;
+		var $tag = $( this ).parent();
+		var $inside = $tag.closest( '.inside' );
 
-		$tag.appendTo( $ignored );
-		text = $tag.find( '.go-opencalais-use' ).text();
+		$tag.appendTo( $inside.find( '.go-opencalais-ignored-list' ) );
 
-		delete go_opencalais.suggested_terms[ taxonomy ][ text ];
+		var tag_name = $tag.find( '.go-opencalais-use' ).text();
+		var taxonomy = $inside.find( '.tagsdiv' ).attr( 'id' );
 
-		// Borrowed from wp-admin/js/post.dev.js
-		tagsval = tags.val();
-		newtags = tagsval ? tagsval + ',' + text : text;
+		delete go_opencalais.suggested_terms[ taxonomy ][ tag_name ];
 
-		newtags = tagBox.clean( newtags );
-		newtags = array_unique_noempty( newtags.split(',') ).join(',');
-		tags.val( newtags );
+		// Get current ignored tags
+		var $ignored_tags = $inside.find( '.the-ignored-tags' );
+		var ignored_tags_value = $ignored_tags.val();
+
+		// Add newly ignored tag to the list
+		var new_value = ignored_tags_value ? ignored_tags_value + ',' + tag_name : tag_name;
+		new_value = tagBox.clean( new_value );
+		new_value = array_unique_noempty( new_value.split(',') ).join(',');
+
+		// Update the ignored tags value
+		$ignored_tags.val( new_value );
 	};
 
 	// Manually refresh the tag list

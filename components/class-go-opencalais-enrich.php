@@ -25,6 +25,9 @@ class GO_OpenCalais_Enrich
 		$this->post = $post;
 	}//end __construct
 
+	/**
+	 * Enrich a post (i.e. call OpenCalais and get the suggested tags for the post's content)
+	 */
 	public function enrich()
 	{
 		$content = apply_filters( 'go_opencalais_content', $post->post_title . "\n\n" . $post->post_excerpt . "\n\n" . $post->post_content, $this->post );
@@ -70,17 +73,16 @@ class GO_OpenCalais_Enrich
 		$this->response     = apply_filters( 'go_opencalais_response', $this->response_raw, $this->post->ID, $this->post );
 	}//end enrich
 
+	/**
+	 * Save OpenCalais resposne to the post meta
+	 */
 	public function save()
 	{
-		$meta = (array) get_post_meta( $this->post->ID, 'go_oc_settings', true );
-
-		if ( empty($meta) )
-		{
-			$meta = array();
-		}//end if
+		$meta = go_opencalais()->get_post_meta( $this->post->ID );
 
 		$meta['enrich']            = json_encode( $this->response );
 		$meta['enrich_unfiltered'] = json_encode( $this->response_raw );
-		update_post_meta( $this->post->ID, 'go_oc_settings', $meta );
+
+		update_post_meta( $this->post->ID, go_opencalais()->post_meta_key, $meta );
 	}//end save
 }//end class

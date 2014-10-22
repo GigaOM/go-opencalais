@@ -18,6 +18,9 @@ class GO_OpenCalais_Admin
 		add_action( 'init', array( $this, 'init' ), 2 );
 	}//end __construct
 
+	/**
+	 * Start things up!
+	 */
 	public function init()
 	{
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
@@ -49,6 +52,9 @@ class GO_OpenCalais_Admin
 		}//end if
 	}//end init
 
+	/**
+	 * Setup scripts and check dependencies for the admin interface
+	 */
 	public function admin_enqueue_scripts( $hook_suffix )
 	{
 		$this->check_dependencies();
@@ -74,14 +80,12 @@ class GO_OpenCalais_Admin
 		wp_enqueue_style( 'fontawesome' );
 
 		$post = get_post();
-
-		// get any go-opencalais meta for the current post
-		$meta = (array) get_post_meta( $post->ID, 'go_oc_settings', TRUE );
+		$meta = go_opencalais()->get_post_meta( $post->ID );
 
 		$localized_values = array(
 			'post_id'          => $post->ID,
 			'nonce'            => wp_create_nonce( 'go-opencalais' ),
-			'ignored_by_tax'   => isset( $meta['ignored'] ) ? $meta['ignored'] : array(),
+			'ignored_by_tax'   => isset( $meta['ignored-tags'] ) ? $meta['ignored-tags'] : array(),
 			'taxonomy_map'     => $this->get_sanitized_mapping(),
 			'local_taxonomies' => go_opencalais()->get_local_taxonomies(),
 			'suggested_terms'  => array(),
@@ -135,6 +139,9 @@ class GO_OpenCalais_Admin
 		<?php
 	}//end admin_notices
 
+	/**
+	 * Return a sanitized version of the taxonomy => OpenCalais entity mapping
+	 */
 	public function get_sanitized_mapping()
 	{
 		$mapping = array();
@@ -170,7 +177,7 @@ class GO_OpenCalais_Admin
 			<div class="go-opencalais">
 				<div>
 					<a href="#" class="go-opencalais-taggroup go-opencalais-suggested">Suggested Tags</a>
-					<a href="#" class="go-opencalais-refresh">Refresh</a>
+					<a href="#" class="go-opencalais-refresh">Refreshing...</a>
 					<div class="go-opencalais-taglist go-opencalais-suggested-list"></div>
 				</div>
 				<div>
@@ -270,20 +277,14 @@ class GO_OpenCalais_Admin
 			$ignore[ $tax ] = $clean_tags;
 		}//end foreach
 
-		$meta = (array) get_post_meta( $post_id, 'go_oc_settings', TRUE );
+		$meta = go_opencalais()->get_post_meta( $post->ID );
+		$meta['ignored-tags'] = $ignore;
 
-		if ( empty($meta) )
-		{
-			$meta = array();
-		}//end if
-
-		$meta['ignored'] = $ignore;
-
-		update_post_meta( $post_id, 'go_oc_settings', $meta );
+		update_post_meta( $post_id, go_opencalais()->post_meta_key, $meta );
 	}//end save_post
 
 	/**
-	 * insert socialTags as entities when there's no other entity with the same value
+	 * Filter the response to add socialTags as entities when there's no other entity with the same value
 	 */
 	public function filter_insert_socialtags_as_entities( $response )
 	{
@@ -307,7 +308,6 @@ class GO_OpenCalais_Admin
 
 				}// end switch
 			}// end if
-
 		}// end foreach
 
 		// identify the unqique tags and insert additional elements so they can be treated as entities
@@ -315,11 +315,14 @@ class GO_OpenCalais_Admin
 		{
 			$response[ $k ]->_type = 'socialTag';
 			$response[ $k ]->relevance = (float) '0.6';
-		}
+		}//end foreach
 
 		return $response;
 	}//end filter_insert_socialtags_as_entities
 
+	/**
+	 * Filter the response to normalize the relevance values
+	 */
 	public function filter_normalize_relevance( $response )
 	{
 		$max_relevance = 0;
@@ -351,7 +354,7 @@ class GO_OpenCalais_Admin
 	}//end filter_normalize_relevance
 
 	/**
-	 *
+	 * Filter the response to handle the tag relevance threshold
 	 */
 	public function filter_response_threshold( $response )
 	{
