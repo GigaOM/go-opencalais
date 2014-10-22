@@ -103,6 +103,24 @@ class GO_OpenCalais
 
 		return $this->autotagger;
 	} // END autotagger
+
+	/**
+	 * Return an array of the local taxonomies that go-opencalais is configured to work with
+	 */
+	public function get_local_taxonomies()
+	{
+		$local_taxonomies = array();
+
+		foreach ( $this->config( 'mapping' ) as $local_taxonomy )
+		{
+			if ( ! isset( $local_taxonomies[ $local_taxonomy ] ) )
+			{
+				$local_taxonomies[ $local_taxonomy ] = $local_taxonomy;
+			} // END if
+		} // END foreach
+
+		return $local_taxonomies;
+	} // END get_local_taxonomies
 }//end class
 
 function go_opencalais()

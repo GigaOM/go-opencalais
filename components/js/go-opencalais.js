@@ -11,6 +11,7 @@
 
 	  	go_opencalais.setup_templates();
 		go_opencalais.ignored_terms();
+		go_opencalais.prep_metaboxes();
 
 		$( '#post input:first' ).after( go_opencalais.templates.nonce( { nonce: go_opencalais.nonce } ) );
 
@@ -30,19 +31,26 @@
 
 	// Handle ignored terms
 	go_opencalais.ignored_terms = function() {
-		var tags = $( '.the-tags' );
+		$( '.the-tags' ).each(function() {
+			var taxonomy = $( this ).attr( 'id' ).substr( 10 );
 
-		$.each( tags, function(){
-			// id="tax-input-[taxonomy]"
-			var taxonomy = $( this ).attr( 'id' ).substr( 10 ),
-				html = go_opencalais.templates.ignore( { tax: taxonomy } ),
-				the_ignored;
+			if ( go_opencalais.ignored_by_tax.hasOwnProperty( taxonomy ) ) {
+				$( go_opencalais.templates.ignore({
+					taxonomy: taxonomy,
+					ignored_taxonomies: go_opencalais.ignored_by_tax[ taxonomy ].join( ',' )
+				}) ).insertAfter( this );
+			}
+		});
+	};
 
-			the_ignored = $( html ).insertAfter( this );
+	// Prep the tag metaboxes with the initial OpenCalais interface
+	go_opencalais.prep_metaboxes = function() {
+		$( '.the-tags' ).each(function() {
+			var taxonomy = $( this ).attr( 'id' ).substr( 10 );
 
-			if ( go_opencalais.ignored_by_tax[ taxonomy ] ) {
-				the_ignored.val( go_opencalais.ignored_by_tax[ taxonomy ].join( ',' ) );
-			}//end if
+			if ( go_opencalais.local_taxonomies.hasOwnProperty( taxonomy ) ) {
+				$( '#tagsdiv-' + taxonomy + ' .inside' ).append( go_opencalais.templates.tags );
+			}
 		});
 	};
 
@@ -59,30 +67,29 @@
 
 	// Handle response from OpenCalais
 	go_opencalais.enrich_callback = function( data, text_status, xhr ) {
-		// container of our local taxonomies, and oc
-		// enrich objects suggested for those taxonomies
+		// container of our local taxonomies
 		var taxonomies = {};
-		var local_tax;
 
 		for ( var prop in go_opencalais.taxonomy_map ) {
-			local_tax = go_opencalais.taxonomy_map[ prop ];
-			taxonomies[ local_tax ] = [];
+			taxonomies[ go_opencalais.taxonomy_map[ prop ] ] = [];
 		}//end for
 
+		// Look at terms returned and add terms to their matching local taxonomy
 		$.each( data, function( idx, obj ) {
 			var type = obj._type;
 
-			if ( 'undefined' != typeof go_opencalais.taxonomy_map[ type ] ) {
+			if ( go_opencalais.taxonomy_map.hasOwnProperty( type ) ) {
 				taxonomies[ go_opencalais.taxonomy_map[ type ] ].push( obj );
 			}//end if
 		});
 
-		$.each( taxonomies, function( tax, obj ) {
+		$.each( taxonomies, function( taxonomy, obj ) {
 			if ( 0 < obj.length ) {
-				go_opencalais.enrich_taxonomy( tax, obj );
+				go_opencalais.enrich_taxonomy( taxonomy, obj );
 			}//end if
 		});
 
+		// We could be running because of a refresh so we set this just in case
 		$( '.go-opencalais-refresh' ).text( 'Refresh' );
 
 		$(document).trigger( 'go-opencalais.complete' );
@@ -92,64 +99,57 @@
 
 	// Handle suggestions for a given taxonomy
 	go_opencalais.enrich_taxonomy = function( taxonomy, oc_objs ) {
-		var $tags_div = $( '#tagsdiv-' + taxonomy ),
-			$inside = $tags_div.find('.inside'),
-			ignored_tags, ignored_tags_hash = {}, html = '',
-			existing_tags_hash = {}, i, len, the_tags;
+		var $inside = $( '#tagsdiv-' + taxonomy + ' .inside');
 
-		if ( 'undefined' == typeof go_opencalais.suggested_terms[taxonomy] ) {
-			go_opencalais.suggested_terms[taxonomy] = {};
-		}//end if
-
-		// Append "Suggested" and "Ignored" sections
-		if ( 0 === $inside.find( '.go-opencalais-suggested-list' ).length ) {
-			$inside.append( go_opencalais.templates.tags );
+		if ( ! go_opencalais.suggested_terms.hasOwnProperty( taxonomy ) ) {
+			go_opencalais.suggested_terms[ taxonomy ] = {};
 		}//end if
 
 		// build list of existing tags
-		the_tags = $inside.find( '.the-tags' ).val().split(',');
+		var existing_tags_hash = {};
 
-		for ( i = 0, len = the_tags.length; i < len; i++ ) {
-			existing_tags_hash[ the_tags[ i ].trim() ] = true;
-		}//end for
+		$.each( $inside.find( '.the-tags' ).val().split(','), function( key, tag ){
+			existing_tags_hash[ tag.trim() ] = true;
+		});
+
+		var ignored_tags_hash = {};
+		var html = '';
 
 		// build list of ignored tags
-		ignored_tags = $inside.find( '.the-ignored-tags' ).val().split(',');
+		$.each( $inside.find( '.the-ignored-tags' ).val().split(','), function( key, tag ){
+			tag = tag.trim();
 
-		for ( i = 0, len = ignored_tags.length; i < len; i++ ) {
 			// skip empty tags (usually if .val() above was zero length
-			if ( '' === ignored_tags[ i ] ) {
-				continue;
+			if ( '' === tag ) {
+				return;
 			}//end if
 
 			// skip tags that are already in use
-			if ( existing_tags_hash[ ignored_tags[ i ] ] ) {
-				continue;
+			if ( existing_tags_hash.hasOwnProperty( tag ) ) {
+				return;
 			}//end if
 
 			if ( go_opencalais.first_run ) {
-				html = html + go_opencalais.templates.tag( { name: ignored_tags[ i ] } );
+				html = html + go_opencalais.templates.tag( { name: tag } );
 			}//end if
 
-			ignored_tags_hash[ ignored_tags[ i ].trim() ] = true;
-		}//end for
+			ignored_tags_hash[ tag ] = true;
+		});
 
 		$inside.find('.go-opencalais-ignored-list').append( html );
-
-		html = '';
 
 		$.each( oc_objs, function( idx, obj ) {
 			if ( ignored_tags_hash[ obj.name.trim() ] || existing_tags_hash[ obj.name.trim() ] ) {
 				return;
 			}//end if
 
-			if ( 'undefined' == typeof go_opencalais.suggested_terms[ taxonomy ][ obj.name ] ) {
-				go_opencalais.suggested_terms[taxonomy][obj.name] = true;
+			if ( ! go_opencalais.suggested_terms[ taxonomy ].hasOwnProperty( obj.name ) ) {
+				go_opencalais.suggested_terms[ taxonomy ][ obj.name ] = true;
 				html = html + go_opencalais.templates.tag( { name: obj.name } );
 			}//end if
 		});
 
-		$inside.find('.go-opencalais-suggested-list').append(html);
+		$inside.find('.go-opencalais-suggested-list').append( html );
 	};
 
 	// Toggle taglist
@@ -168,6 +168,7 @@
 	};
 
 	// Toggle a suggested tag
+	// @TODO This one could still use a little code cleanup but it does function as is.
 	go_opencalais.tag_ignore = function( e ) {
 		var $tag = $( this ).parent(),
 			$inside = $tag.closest( '.inside' ),

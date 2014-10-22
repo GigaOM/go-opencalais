@@ -79,11 +79,12 @@ class GO_OpenCalais_Admin
 		$meta = (array) get_post_meta( $post->ID, 'go_oc_settings', TRUE );
 
 		$localized_values = array(
-			'post_id'         => $post->ID,
-			'nonce'           => wp_create_nonce( 'go-opencalais' ),
-			'ignored_by_tax'  => isset( $meta['ignored'] ) ? $meta['ignored'] : array(),
-			'taxonomy_map'    => $this->get_sanitized_mapping(),
-			'suggested_terms' => array(),
+			'post_id'          => $post->ID,
+			'nonce'            => wp_create_nonce( 'go-opencalais' ),
+			'ignored_by_tax'   => isset( $meta['ignored'] ) ? $meta['ignored'] : array(),
+			'taxonomy_map'     => $this->get_sanitized_mapping(),
+			'local_taxonomies' => go_opencalais()->get_local_taxonomies(),
+			'suggested_terms'  => array(),
 		);
 
 		wp_localize_script( go_opencalais()->slug, 'go_opencalais', $localized_values );
@@ -182,7 +183,7 @@ class GO_OpenCalais_Admin
 			<input type="hidden" id="go-opencalais-nonce" name="go-opencalais-nonce" value="{{nonce}}" />
 		</script>
 		<script id="go-opencalais-handlebars-ignore" type="text/x-handlebars-template">
-			<textarea name="tax_ignore[{{tax}}]" class="the-ignored-tags" id="tax-ignore-{{tax}}"></textarea>
+			<textarea name="tax_ignore[{{taxonomy}}]" class="the-ignored-tags" id="tax-ignore-{{taxonomy}}">{{ignored_taxonomies}}</textarea>
 		</script>
 		<script id="go-opencalais-handlebars-tag" type="text/x-handlebars-template">
 			<span><a class="go-opencalais-ignore" title="Ignore tag"><i class="fa fa-times-circle"></i></a>&nbsp;<a class="go-opencalais-use">{{name}}</a></span>
