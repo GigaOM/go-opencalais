@@ -28,7 +28,7 @@ Usage Notes
 			// The number of allowed ignored tags per post
 			'max_ignored_tags' => 30,
 			'mapping' => array(
-				// 'Open Calais entity name' => 'WordPress taxonomy',
+				// In the format of 'OpenCalais entity name' => 'WordPress taxonomy',
 				'socialTag' => 'post_tag',
 			),
 			'autotagger' => array(
