@@ -123,7 +123,7 @@ class GO_OpenCalais_Admin
 		?>
 		<div class="error">
 			<p>
-				You must <a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>">activate</a> the following plugins before using <code>bstat</code>'s report:
+				You must <a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>">activate</a> the following plugins before using <code>Gigaom OpenCalais</code>:
 			</p>
 			<ul>
 				<?php
@@ -480,7 +480,7 @@ class GO_OpenCalais_Admin
 	}//end enrich
 
 	/**
-	 * Check relevence of the member
+	 * Check relevance of the member
 	 */
 	public function _filter_response_threshold( $member )
 	{

@@ -67,7 +67,7 @@ class GO_OpenCalais
 	}//end config
 
 	/**
-	 * a singleton for the admin object
+	 * a object accessor for the admin object
 	 */
 	public function admin()
 	{
@@ -81,7 +81,7 @@ class GO_OpenCalais
 	} // END admin
 
 	/**
-	 * a singleton for the enrich object
+	 * a object accessor for the enrich object
 	 */
 	public function enrich( $post )
 	{
@@ -89,7 +89,7 @@ class GO_OpenCalais
 	}//end enrich
 
 	/**
-	 * a singleton for the autotagger object
+	 * a object accessor for the autotagger object
 	 */
 	public function autotagger()
 	{

@@ -74,15 +74,14 @@ class GO_OpenCalais_AutoTagger
 
 		foreach ( $query->posts as $post )
 		{
-			echo '<hr />';
-			echo '<p>';
-			echo absint( $post->ID ) . '<br />';
-			echo esc_html( $post->post_title ) . '<br />';
 			?>
-			<a href="<?php echo( esc_attr( get_edit_post_link() ) ) ?>">Edit Post</a>
+			<hr />
+			<p>
+			    <?php echo absint( $post->ID ); ?><br />
+			    <?php echo esc_html( $post->post_title ); ?><br />
+			    <a href="<?php echo esc_url( get_edit_post_link() ); ?>">Edit Post</a>
+			</p>
 			<?php
-			echo '</p>';
-
 			// Try to autotag post
 			$results = $this->autotag_post( $post );
 
@@ -107,7 +106,7 @@ class GO_OpenCalais_AutoTagger
 					{
 						?>
 						<li style="color: green;">
-							<?php echo esc_html( $term['term'] ) . ' (RELEVENCE: ' . esc_html( $term['rel'] ) . ')'; ?>
+							<?php echo esc_html( $term['term'] . ' (RELEVANCE: ' . $term['rel'] . ')' ); ?>
 						</li>
 						<?php
 					}//end if
@@ -115,7 +114,7 @@ class GO_OpenCalais_AutoTagger
 					{
 						?>
 						<li style="color: red;">
-							<?php echo esc_html( $term['term'] ) . ' (RELEVENCE: ' . esc_html( $term['rel'] ) . ')'; ?>
+							<?php echo esc_html( $term['term'] . ' (RELEVANCE: ' . $term['rel'] . ')' ); ?>
 						</li>
 						<?php
 					}//end else
@@ -130,7 +129,7 @@ class GO_OpenCalais_AutoTagger
 			'num'    => $posts_per_page,
 		);
 		?>
-		<p><em>Will reload to the next <?php echo esc_html( $posts_per_page ); ?>, every 5 seconds.</em></p>
+		<p><em>Will reload to the next <?php echo absint( $posts_per_page ); ?>, every 5 seconds.</em></p>
 		<script type="text/javascript">
 		var reloader = window.setTimeout(function(){
 			window.location = "?<?php echo http_build_query( $args ); ?>";
