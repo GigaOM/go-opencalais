@@ -88,14 +88,13 @@
 			}//end if
 		});
 
-		$.each( taxonomies, function( taxonomy, obj ) {
-			if ( 0 < obj.length ) {
-				go_opencalais.enrich_taxonomy( taxonomy, obj );
-			}//end if
+		$.each( go_opencalais.local_taxonomies, function( taxonomy ) {
+			if ( taxonomies.hasOwnProperty( taxonomy ) && taxonomies[ taxonomy ].length  ) {
+				go_opencalais.enrich_taxonomy( taxonomy, taxonomies[ taxonomy ] );
+			} else {
+				go_opencalais.enrich_taxonomy( taxonomy, false );
+			}
 		});
-
-		// We could be running because of a refresh so we set this just in case
-		$( '.go-opencalais-refresh' ).text( 'Refresh' );
 
 		$(document).trigger( 'go-opencalais.complete' );
 
@@ -103,8 +102,16 @@
 	};
 
 	// Handle suggestions for a given taxonomy
-	go_opencalais.enrich_taxonomy = function( taxonomy, oc_objs ) {
+	go_opencalais.enrich_taxonomy = function( taxonomy, opencalais_objects ) {
 		var $inside = $( '#tagsdiv-' + taxonomy + ' .inside');
+
+		if ( false === opencalais_objects ) {
+			$inside.find( '.go-opencalais-suggested-list' ).html( 'No suggestions found' );
+			$inside.find( '.go-opencalais-ignored' ).hide();
+			return;
+		} else {
+			$inside.find( '.go-opencalais-ignored' ).show();
+		}
 
 		if ( ! go_opencalais.suggested_terms.hasOwnProperty( taxonomy ) ) {
 			go_opencalais.suggested_terms[ taxonomy ] = {};
@@ -118,7 +125,7 @@
 		});
 
 		var ignored_tags_hash = {};
-		var html = '';
+		var ignored_tags = '';
 
 		// build list of ignored tags
 		$.each( $inside.find( '.the-ignored-tags' ).val().split(','), function( key, tag ){
@@ -135,26 +142,40 @@
 			}//end if
 
 			if ( go_opencalais.first_run ) {
-				html = html + go_opencalais.templates.tag( { name: tag } );
+				ignored_tags = ignored_tags + go_opencalais.templates.tag( { name: tag } );
 			}//end if
 
 			ignored_tags_hash[ tag ] = true;
 		});
 
-		$inside.find('.go-opencalais-ignored-list').append( html );
+		if ( '' != ignored_tags ) {
+			$inside.find( '.go-opencalais-ignored-list' ).html( ignored_tags );
+		} else {
+			$inside.find( '.go-opencalais-ignored-list' ).html( 'None' );
+		}//end else
 
-		$.each( oc_objs, function( idx, obj ) {
+		// compile suggested tags
+		$.each( opencalais_objects, function( idx, obj ) {
 			if ( ignored_tags_hash[ obj.name.trim() ] || existing_tags_hash[ obj.name.trim() ] ) {
 				return;
 			}//end if
 
 			if ( ! go_opencalais.suggested_terms[ taxonomy ].hasOwnProperty( obj.name ) ) {
 				go_opencalais.suggested_terms[ taxonomy ][ obj.name ] = true;
-				html = html + go_opencalais.templates.tag( { name: obj.name } );
 			}//end if
 		});
 
-		$inside.find('.go-opencalais-suggested-list').append( html );
+		var suggested_tags = '';
+
+		$.each( go_opencalais.suggested_terms[ taxonomy ], function( tag ) {
+			suggested_tags = suggested_tags + go_opencalais.templates.tag( { name: tag } );
+		});
+
+		if ( '' != suggested_tags ) {
+			$inside.find( '.go-opencalais-suggested-list' ).html( suggested_tags );
+		} else {
+			$inside.find( '.go-opencalais-suggested-list' ).html( 'No suggestions found' );
+		}//end else
 	};
 
 	// Toggle taglist
@@ -201,12 +222,12 @@
 	go_opencalais.tag_refresh = function( e ) {
 		var params = {
 			'action': 'go_opencalais_enrich',
-			'content': $( 'input[name="post_title"]' ).val() + "\n\n" + $( '.wp-editor-area' ).val(),
+			'content': $( 'input[name="post_title"]' ).val()  + "\n\n" + $( '#excerpt' ).val() + "\n\n" + $( '.wp-editor-area' ).val(),
 			'post_id': go_opencalais.post_id,
 			'nonce': go_opencalais.nonce
 		};
 
-		$( '.go-opencalais-refresh' ).text( 'Refreshing...' );
+		$( '.go-opencalais-suggested-list' ).html( 'Refreshing...' );
 
 		$.post( ajaxurl, params, go_opencalais.enrich_callback, 'json' );
 

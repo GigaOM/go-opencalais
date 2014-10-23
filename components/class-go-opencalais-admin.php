@@ -176,13 +176,13 @@ class GO_OpenCalais_Admin
 		<script id="go-opencalais-handlebars-tags" type="text/x-handlebars-template">
 			<div class="go-opencalais">
 				<div>
-					<a href="#" class="go-opencalais-taggroup go-opencalais-suggested">Suggested Tags</a>
-					<a href="#" class="go-opencalais-refresh">Refreshing...</a>
-					<div class="go-opencalais-taglist go-opencalais-suggested-list"></div>
+					<a href="#" class="go-opencalais-taggroup go-opencalais-suggested">Suggested tags</a>
+					<a href="#" class="go-opencalais-refresh">Refresh</a>
+					<div class="go-opencalais-taglist go-opencalais-suggested-list">Refreshing...</div>
 				</div>
 				<div>
-					<a href="#" class="go-opencalais-taggroup go-opencalais-ignored">Ignored Tags</a>
-					<div style="display:none;" class="go-opencalais-taglist go-opencalais-ignored-list"></div>
+					<a href="#" class="go-opencalais-taggroup go-opencalais-ignored" style="display: none;">Ignored tags</a>
+					<div style="display: none;" class="go-opencalais-taglist go-opencalais-ignored-list"></div>
 				</div>
 			</div>
 		</script>

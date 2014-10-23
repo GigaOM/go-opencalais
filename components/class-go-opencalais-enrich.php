@@ -30,7 +30,7 @@ class GO_OpenCalais_Enrich
 	 */
 	public function enrich()
 	{
-		$content = apply_filters( 'go_opencalais_content', $post->post_title . "\n\n" . $post->post_excerpt . "\n\n" . $post->post_content, $this->post );
+		$content = apply_filters( 'go_opencalais_content', $this->post->post_title . "\n\n" . $this->post->post_excerpt . "\n\n" . $this->post->post_content, $this->post );
 
 		if ( empty( $content ))
 		{
