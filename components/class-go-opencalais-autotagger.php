@@ -18,7 +18,7 @@ class GO_OpenCalais_AutoTagger
 	{
 		global $post, $wp_version, $wpdb;
 
-		if ( ! current_user_can( 'manage_options') )
+		if ( ! current_user_can( 'manage_options' ) )
 		{
 			wp_die( 'You should not be here!' );
 		}//end if
@@ -61,7 +61,7 @@ class GO_OpenCalais_AutoTagger
 		{
 			?>
 			<p>No posts found.</p>
-			<a href="<?php echo admin_url(); ?>" onclick="clearTimeout(reloader)">WP Admin Dashboard</a>
+			<a href="<?php echo esc_url( admin_url() ); ?>" onclick="clearTimeout(reloader)">WP Admin Dashboard</a>
 			<?php
 			die;
 		} // END if
@@ -87,7 +87,7 @@ class GO_OpenCalais_AutoTagger
 
 			if ( is_wp_error( $results ) )
 			{
-				echo '<p style="color: red;">ERROR: ' . $results->get_error_message() . '</p>';
+				echo '<p style="color: red;">ERROR: ' . esc_html( $results->get_error_message() ) . '</p>';
 				continue;
 			}//end if
 
@@ -132,12 +132,12 @@ class GO_OpenCalais_AutoTagger
 		<p><em>Will reload to the next <?php echo absint( $posts_per_page ); ?>, every 5 seconds.</em></p>
 		<script type="text/javascript">
 		var reloader = window.setTimeout(function(){
-			window.location = "?<?php echo http_build_query( $args ); ?>";
+			window.location = "?<?php echo esc_url( http_build_query( $args ) ); ?>";
 		}, 5000);
 		</script>
 		<p>
 			  <a href="#stop" onclick="clearTimeout(reloader)">Stop</a>
-			| <a href="<?php echo admin_url(); ?>" onclick="clearTimeout(reloader)">WP Admin Dashboard</a>
+			| <a href="<?php echo esc_url( admin_url() ); ?>" onclick="clearTimeout(reloader)">WP Admin Dashboard</a>
 		</p>
 		<?php
 		die;

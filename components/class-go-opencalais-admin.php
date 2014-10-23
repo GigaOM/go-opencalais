@@ -163,15 +163,14 @@ class GO_OpenCalais_Admin
 	/**
 	 * Set handlebars.js templates
 	 */
-	public function action_admin_footer_post( $hook_suffix )
+	public function action_admin_footer_post()
 	{
-		global $action, $post;
+		global $action;
 
 		if ( 'edit' !== $action )
 		{
 			return;
 		}//end if
-
 		?>
 		<script id="go-opencalais-handlebars-tags" type="text/x-handlebars-template">
 			<div class="go-opencalais">
@@ -305,7 +304,6 @@ class GO_OpenCalais_Admin
 						break;
 					default:
 						break;
-
 				}// end switch
 			}// end if
 		}// end foreach
@@ -328,7 +326,7 @@ class GO_OpenCalais_Admin
 		$max_relevance = 0;
 
 		// first, find max
-		foreach( $response as $object )
+		foreach ( $response as $object )
 		{
 			if ( isset( $object->relevance ) && $object->relevance > $max_relevance )
 			{
@@ -337,7 +335,7 @@ class GO_OpenCalais_Admin
 		}//end foreach
 
 		// then normalize
-		foreach( $response as &$object )
+		foreach ( $response as &$object )
 		{
 			if ( isset( $object->relevance ) )
 			{
