@@ -201,7 +201,7 @@ class GO_OpenCalais_AutoTagger
 
 			if ( $usable && $local_tax )
 			{
-				if( ! isset( $valid_terms[ $local_tax ] ) )
+				if ( ! isset( $valid_terms[ $local_tax ] ) )
 				{
 					$valid_terms[ $local_tax ] = array();
 				}//end if

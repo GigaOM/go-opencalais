@@ -32,7 +32,7 @@ class GO_OpenCalais_Enrich
 	{
 		$content = apply_filters( 'go_opencalais_content', $this->post->post_title . "\n\n" . $this->post->post_excerpt . "\n\n" . $this->post->post_content, $this->post );
 
-		if ( empty( $content ))
+		if ( empty( $content ) )
 		{
 			return new WP_Error( 'empty-content', 'Cannot enrich empty post', $this->post );
 		}//end if
