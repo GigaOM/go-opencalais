@@ -10,7 +10,6 @@
 		go_opencalais.first_run = true;
 
 	  	go_opencalais.setup_templates();
-		go_opencalais.ignored_terms();
 		go_opencalais.prep_metaboxes();
 
 		$( '#post input:first' ).after( go_opencalais.templates.nonce( { nonce: go_opencalais.nonce } ) );
@@ -29,11 +28,12 @@
 		};
 	};
 
-	// Handle ignored terms
-	go_opencalais.ignored_terms = function() {
+	// Prep the tag metaboxes with the initial OpenCalais interface
+	go_opencalais.prep_metaboxes = function() {
 		$( '.the-tags' ).each(function() {
 			var taxonomy = $( this ).attr( 'id' ).substr( 10 );
 
+			// Settup ignored tags inputs
 			if ( go_opencalais.ignored_by_tax.hasOwnProperty( taxonomy ) ) {
 				$( go_opencalais.templates.ignore({
 					taxonomy: taxonomy,
@@ -44,18 +44,12 @@
 					taxonomy: taxonomy,
 					ignored_taxonomies: ''
 				}) ).insertAfter( this );
-			}
-		});
-	};
+			}//end else if
 
-	// Prep the tag metaboxes with the initial OpenCalais interface
-	go_opencalais.prep_metaboxes = function() {
-		$( '.the-tags' ).each(function() {
-			var taxonomy = $( this ).attr( 'id' ).substr( 10 );
-
+			// Add suggestions interface to metaboxes
 			if ( go_opencalais.local_taxonomies.hasOwnProperty( taxonomy ) ) {
 				$( '#tagsdiv-' + taxonomy + ' .inside' ).append( go_opencalais.templates.tags );
-			}
+			}//end if
 		});
 	};
 
@@ -148,7 +142,7 @@
 			ignored_tags_hash[ tag ] = true;
 		});
 
-		if ( '' != ignored_tags ) {
+		if ( '' !== ignored_tags ) {
 			$inside.find( '.go-opencalais-ignored-list' ).html( ignored_tags );
 		} else {
 			$inside.find( '.go-opencalais-ignored-list' ).html( 'None' );
@@ -171,7 +165,7 @@
 			suggested_tags = suggested_tags + go_opencalais.templates.tag( { name: tag } );
 		});
 
-		if ( '' != suggested_tags ) {
+		if ( '' !== suggested_tags ) {
 			$inside.find( '.go-opencalais-suggested-list' ).html( suggested_tags );
 		} else {
 			$inside.find( '.go-opencalais-suggested-list' ).html( 'No suggestions found' );
@@ -191,14 +185,21 @@
 
 		// Remove tag after it's added
 		$( this ).parent().remove();
+
+		e.preventDefault();
 	};
 
 	// Toggle a suggested tag
 	go_opencalais.tag_ignore = function( e ) {
 		var $tag = $( this ).parent();
 		var $inside = $tag.closest( '.inside' );
+		var $ignored_tag_list = $inside.find( '.go-opencalais-ignored-list' );
 
-		$tag.appendTo( $inside.find( '.go-opencalais-ignored-list' ) );
+		if ( 'None' === $ignored_tag_list.html() ) {
+			$ignored_tag_list.html('');
+		}//end if
+
+		$tag.appendTo( $ignored_tag_list );
 
 		var tag_name = $tag.find( '.go-opencalais-use' ).text();
 		var taxonomy = $inside.find( '.tagsdiv' ).attr( 'id' );
@@ -216,13 +217,15 @@
 
 		// Update the ignored tags value
 		$ignored_tags.val( new_value );
+
+		e.preventDefault();
 	};
 
 	// Manually refresh the tag list
 	go_opencalais.tag_refresh = function( e ) {
 		var params = {
 			'action': 'go_opencalais_enrich',
-			'content': $( 'input[name="post_title"]' ).val()  + "\n\n" + $( '#excerpt' ).val() + "\n\n" + $( '.wp-editor-area' ).val(),
+			'content': $( 'input[name="post_title"]' ).val()  + '\n\n' + $( '#excerpt' ).val() + '\n\n' + $( '.wp-editor-area' ).val(),
 			'post_id': go_opencalais.post_id,
 			'nonce': go_opencalais.nonce
 		};
