@@ -14,8 +14,7 @@ class GO_OpenCalais_Admin
 	 */
 	public function __construct()
 	{
-		// check to see if the API is set and we have mappings befor adding hooks
-		add_action( 'init', array( $this, 'init' ), 2 );
+		add_action( 'init', array( $this, 'init' ) );
 	}//end __construct
 
 	/**
