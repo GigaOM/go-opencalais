@@ -33,7 +33,7 @@ class GO_OpenCalais_Admin
 		add_filter( 'go_opencalais_response', array( $this, 'filter_normalize_relevance' ), 3 );
 		add_filter( 'go_opencalais_response', array( $this, 'filter_response_threshold' ), 7 );
 
-		// check if the autotagger is configged before loading it
+		// check if the autotagger is configured before loading it
 		if ( is_array( go_opencalais()->config( 'autotagger' ) ) )
 		{
 			// Register the OpenCalais Autotagger taxonomy
