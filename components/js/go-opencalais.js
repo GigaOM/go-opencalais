@@ -22,11 +22,11 @@
 	// Initialize some templates for use later
 	go_opencalais.setup_templates = function() {
 		go_opencalais.templates = {
-			tags:   Handlebars.compile( $("#go-opencalais-handlebars-tags").html() ),
-			nonce:  Handlebars.compile( $("#go-opencalais-handlebars-nonce").html() ),
-			ignore: Handlebars.compile( $("#go-opencalais-handlebars-ignore").html() ),
-			tag:    Handlebars.compile( $("#go-opencalais-handlebars-tag").html() ),
-		}
+			tags:   Handlebars.compile( $( 'go-opencalais-handlebars-tags' ).html() ),
+			nonce:  Handlebars.compile( $( 'go-opencalais-handlebars-nonce' ).html() ),
+			ignore: Handlebars.compile( $( 'go-opencalais-handlebars-ignore' ).html() ),
+			tag:    Handlebars.compile( $( 'go-opencalais-handlebars-tag' ).html() ),
+		};
 	};
 
 	// Handle ignored terms
