@@ -1,210 +1,178 @@
 <?php
-/**
- * Plugin Name: Gigaom OpenCalais Autotagger
- * Plugin URI:
- * Description:
- * Version: 0.1
- * Author: Adam Backstrom for Gigaom
- * Author URI: http://sixohthree.com/
- * License: GPL2
- */
 
 class GO_OpenCalais_AutoTagger
 {
-
-	protected $threshold = 0.29;
+	public $threshold;
+	public $mapping = array();
 
 	public function __construct()
 	{
-		$this->config = go_opencalais()->admin()->config;
-
-		add_action( 'wp_ajax_oc_autotag', array( $this, 'autotag_batch' ) );
-		add_action( 'wp_ajax_oc_autotag_update', array( $this, 'update' ) );
-		add_action( 'go_oc_content', array( $this, 'go_oc_content' ), 5, 3 );
+		add_action( 'wp_ajax_go_opencalais_autotag', array( $this, 'autotag' ) );
+		add_action( 'go_opencalais_content', array( $this, 'go_opencalais_content' ), 5, 3 );
 	}//end __construct
 
-	public function autotag_batch()
+	/**
+	 * Batch autotagging of posts
+	 */
+	public function autotag()
 	{
 		global $post, $wp_version, $wpdb;
 
-		if ( ! current_user_can( 'manage_options') )
+		if ( ! current_user_can( 'manage_options' ) )
 		{
-			die( 'no access' );
+			wp_die( 'You should not be here!' );
 		}//end if
+		?>
+		<h2>Gigaom OpenCalais Bulk Auto-tagger</h2>
+		<?php
+		// Prep mapping for use later
+		$this->mapping = go_opencalais()->config( 'mapping' );
 
 		// any updates to the default threshold?
-		$this->threshold = apply_filters( 'go_oc_autotag_threshold', $this->threshold );
-
-		$posts_per_page = isset( $_REQUEST['posts_per_page'] ) ? (int) $_REQUEST['posts_per_page'] : $this->config['autotagger']['per_page'];
+		$this->threshold = apply_filters( 'go_opencalais_autotag_threshold', go_opencalais()->config( 'autotagger' )['threshold'] );
+		$posts_per_page  = isset( $_REQUEST['num'] ) ? (int) $_REQUEST['num'] : go_opencalais()->config( 'autotagger' )['num'];
 
 		// sanity check
-		if ( $posts_per_page > 20 )
+		if ( 20 < $posts_per_page )
 		{
 			$posts_per_page = 20;
 		}//end if
 
-		if ( version_compare( $wp_version, '3.1', '>=' ) )
-		{
-			$tax_query = array(
+		// Get posts that haven't been auto tagged yet
+		$args = array(
+			'post_type'      => go_opencalais()->config( 'post_types' ),
+			'post_status'    => array( 'any' ),
+			'posts_per_page' => $posts_per_page,
+			'orderby'        => 'ID',
+			'order'          => 'DESC',
+			'tax_query'      => array(
 				array(
-					'taxonomy' => $this->config['autotagger']['taxonomy'],
+					'taxonomy' => go_opencalais()->slug . '-autotagger',
 					'field'    => 'slug',
-					'terms'    => $this->config['autotagger']['term'],
+					'terms'    => array( go_opencalais()->config( 'autotagger' )['term'] ),
 					'operator' => 'NOT IN',
 				),
-			);
+			),
+		);
 
-			$args = array(
-				'post_type'      => 'post',
-				'posts_per_page' => $posts_per_page,
-				'tax_query'      => $tax_query,
-				'orderby'        => 'ID',
-				'order'          => 'DESC',
-				'fields'         => 'ids',
-			);
+		$query = new WP_Query( $args );
 
-			$query = new WP_Query( $args );
-			$posts = $query->posts;
-		}//end if
+		if ( ! $query->posts )
+		{
+			?>
+			<p>No posts found.</p>
+			<a href="<?php echo esc_url( admin_url() ); ?>" onclick="clearTimeout(reloader)">WP Admin Dashboard</a>
+			<?php
+			die;
+		} // END if
 		else
 		{
-			$term = get_term_by( 'slug', $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'] );
-			$term_taxonomy_id = $term ? $term->term_taxonomy_id : -1;
-			$posts = $wpdb->get_col( $sql = $wpdb->prepare( "
-				SELECT p.ID
-				FROM $wpdb->posts p
-				LEFT JOIN $wpdb->term_relationships tr ON tr.object_id = p.ID AND tr.term_taxonomy_id = %d
-				WHERE 1=1
-				AND tr.object_id IS NULL
-				AND p.post_type = 'post'
-				AND p.post_status = 'publish'
-				ORDER BY p.ID DESC
-				LIMIT %d", $term_taxonomy_id, $posts_per_page ) );
-		}//end else
+			?>
+			<p><a href="#stop" onclick="clearTimeout(reloader)">Stop</a></p>
+			<?php
+		} // END else
 
-		// subsequent ajax loads
-		if ( ! isset( $_REQUEST['more'] ) )
+		foreach ( $query->posts as $post )
 		{
-			echo '<h1>OpenCalais Bulk Auto-tagger</h1>';
-		}//end if
+			?>
+			<hr />
+			<p>
+			    <?php echo absint( $post->ID ); ?><br />
+			    <?php echo esc_html( $post->post_title ); ?><br />
+			    <a href="<?php echo esc_url( get_edit_post_link() ); ?>">Edit Post</a>
+			</p>
+			<?php
+			// Try to autotag post
+			$results = $this->autotag_post( $post );
 
-		foreach( $posts as $post )
-		{
-			$post = get_post( $post );
-
-			echo '<hr>';
-			echo '<h2><a href="', esc_attr( get_edit_post_link() ), '">', get_the_title(), '</a> (#', get_the_ID(), ')</h2>';
-
-			$taxes = $this->autotag_post( $post );
-			if( is_wp_error( $taxes ) )
+			if ( is_wp_error( $results ) )
 			{
-				echo "<span style='color:red'>ERROR:</span> ", $taxes->get_error_message();
+				echo '<p style="color: red;">ERROR: ' . esc_html( $results->get_error_message() ) . '</p>';
 				continue;
 			}//end if
 
-			echo '<ul>';
-
-			foreach( $taxes as $tax => $terms )
+			// Show the auto tagging results for this post
+			?>
+			<p>Suggested Tags by Taxonomy (<span style="color: green;">Applied</span>/<span style="color: red;">Skipped</span>)</p>
+			<?php
+			foreach ( $results as $taxonomy => $terms )
 			{
-				$first = true;
-				foreach( $terms as $term )
-				{
-					if( $first )
-					{
-						echo '<li>';
-						$local_tax = ( isset( $term['local_tax'] ) && $term['local_tax'] ) ? $term['local_tax'] : false;
-						$color     = $local_tax ? 'green' : 'red';
-						echo "<span style='font-weight:bold;color:$color'>", esc_html( $tax ), ( $local_tax ? " ($local_tax)" : '' ),
-							'</span> ';
-						$first = false;
-					}//end if
+				echo '<p>' . esc_html( $taxonomy ) . '</p>';
+				echo '<ul>';
 
+				foreach ( $terms as $term )
+				{
 					if ( $term['usable'] )
 					{
-						$term['term'] = '<strong>' . esc_html( $term['term'] ) . ' <small>(' . esc_html( $term['rel'] ) . ')</small> </strong>';
+						?>
+						<li style="color: green;">
+							<?php echo esc_html( $term['term'] . ' (RELEVANCE: ' . $term['rel'] . ')' ); ?>
+						</li>
+						<?php
 					}//end if
 					else
 					{
-						$term['term'] = '<small>' . esc_html( $term['term'] ) . ' <small>(' . esc_html( $term['rel'] ) . ')</small></small>';
+						?>
+						<li style="color: red;">
+							<?php echo esc_html( $term['term'] . ' (RELEVANCE: ' . $term['rel'] . ')' ); ?>
+						</li>
+						<?php
 					}//end else
-
-					echo esc_html( $term['term'] ), '; ';
 				}//end foreach
-				echo '</li>';
-			}//end foreach
 
-			echo '</ul>';
+				echo '</ul>';
+			}//end foreach
 		}//end foreach
 
-		if ( count($posts) > 0 )
-		{
-			// first time through, load jquery and create reload function
-			if ( ! isset( $_REQUEST['more'] ) )
-			{
-				?>
-				<div id="more"><a href="">Loading more in 5 seconds&hellip;</a></div>
-				<script type="text/javascript">
-				jQuery( function() {
-					var do_oc_refresh = function() {
-						jQuery.get( document.location.href, {'more':1}, function( data, ts, xhr ) {
-							jQuery('#more').before( data );
-							if( 'done' == data ) {
-								jQuery('#more').remove();
-							} else {
-								setTimeout( do_oc_refresh, 5000 );
-							}
-						});
-					};
-					setTimeout( do_oc_refresh, 5000 );
-				});
-				</script>
-				<?php
-			}//end if
-		}//end if
-		else
-		{
-			echo 'done';
-		}//end else
-
+		$args = array(
+			'action' => 'go_opencalais_autotag',
+			'num'    => $posts_per_page,
+		);
+		?>
+		<p><em>Will reload to the next <?php echo absint( $posts_per_page ); ?>, every 5 seconds.</em></p>
+		<script type="text/javascript">
+		var reloader = window.setTimeout(function(){
+			window.location = "?<?php echo esc_url( http_build_query( $args ) ); ?>";
+		}, 5000);
+		</script>
+		<p>
+			  <a href="#stop" onclick="clearTimeout(reloader)">Stop</a>
+			| <a href="<?php echo esc_url( admin_url() ); ?>" onclick="clearTimeout(reloader)">WP Admin Dashboard</a>
+		</p>
+		<?php
 		die;
-	}//end autotag_batch
+	}//end autotag
 
+	/**
+	 * Autotag a post and return the taxonomies and terms it was autotagged with
+	 */
 	protected function autotag_post( $post )
 	{
-		$enrich = new go_opencalais_enrich( $post );
+		$enrich = go_opencalais()->enrich( $post );
 
-		$error = $enrich->enrich();
-		if ( is_wp_error( $error ) )
+		$result = $enrich->enrich();
+
+		if ( is_wp_error( $result ) )
 		{
-			// FIXME: this is imperfect. what if the content was empty
-			// as the result of a bogus filter, or some other error?
-			// do we need another tag for skipped posts, or does it not
-			// matter? (I'm getting this error for an auto-draft, and its
-			// causing the queue to have a recurring item that never
-			// gets tagged.)
-			$this->mark_autotagged( $post );
-
-			return $error;
+			return $result;
 		}//end if
 
-		$error = $enrich->save();
-		if ( is_wp_error( $error ) )
+		$result = $enrich->save();
+
+		if ( is_wp_error( $result ) )
 		{
-			return $error;
+			return $result;
 		}//end if
 
-		// Array of all incoming suggested tags, regardless of relevancy
-		// or taxonomy.
-		//
-		//     $taxes[ $tax ][ $term ] = array( 'rel' => N, 'rel_orig' => N )
-		$taxes = array();
+		// Array of all incoming suggested tags, regardless of relevancy or taxonomy.
+		// $taxes[ $tax ][ $term ] = array( 'rel' => N, 'rel_orig' => N )
+		$suggested_terms = array();
 
 		// Terms to use, by local taxonomy.
-		//
-		//     $valid_terms[ $local_tax ] = array( $term [ , $term, ... ] )
+		// $valid_terms[ $local_tax ] = array( $term [ , $term, ... ] )
 		$valid_terms = array();
 
-		foreach( $enrich->response as $obj )
+		foreach ( $enrich->response as $obj )
 		{
 			if ( ! isset( $obj->relevance ) )
 			{
@@ -215,25 +183,25 @@ class GO_OpenCalais_AutoTagger
 			$rel_orig  = $obj->_go_orig_relevance;
 			$type      = $obj->_type;
 			$term      = $obj->name;
-			$local_tax = null;
+			$local_tax = NULL;
 			$usable    = $rel > $this->threshold;
 
 			// does this type map to a local taxonomy?
-			if ( isset( $this->config['mapping'][ $type ] ) )
+			if ( isset( $this->mapping[ $type ] ) )
 			{
-				$local_tax = $this->config['mapping'][ $type ];
+				$local_tax = $this->mapping[ $type ];
 			}//end if
 
-			if ( ! isset( $taxes[ $type ] ) )
+			if ( ! isset( $suggested_terms[ $local_tax ] ) )
 			{
-				$taxes[ $type ] = array();
+				$suggested_terms[ $local_tax ] = array();
 			}//end if
 
-			$taxes[ $type ][ $term ] = compact( 'rel', 'rel_orig', 'local_tax', 'usable', 'term' );
+			$suggested_terms[ $local_tax ][ $term ] = compact( 'rel', 'rel_orig', 'local_tax', 'usable', 'term', 'type' );
 
 			if ( $usable && $local_tax )
 			{
-				if( ! isset( $valid_terms[ $local_tax ] ) )
+				if ( ! isset( $valid_terms[ $local_tax ] ) )
 				{
 					$valid_terms[ $local_tax ] = array();
 				}//end if
@@ -242,52 +210,40 @@ class GO_OpenCalais_AutoTagger
 			}//end if
 		}//end foreach
 
-		$valid_terms = apply_filters( 'go_oc_autotag_terms', $valid_terms, $taxes );
+		$valid_terms = apply_filters( 'go_opencalais_autotagger_terms', $valid_terms, $suggested_terms, $post );
 
 		// append terms to the post
-		foreach( $valid_terms as $tax => $terms )
+		foreach ( $valid_terms as $tax => $terms )
 		{
-			wp_set_object_terms( $post->ID, $terms, $tax, true );
+			wp_set_object_terms( $post->ID, $terms, $tax, TRUE );
 		}//end foreach
 
 		$this->mark_autotagged( $post );
 
-		return $taxes;
+		return $suggested_terms;
 	}//end autotag_post
 
-	public function go_oc_content( $content, $post_id, $post )
+	/**
+	 * Filter the go_opencalais_content hook and include post_tag terms in the content
+	 * @TODO Worth deciding if there's a point to this
+	 */
+	public function go_opencalais_content( $content, $post )
 	{
 		$term_list = get_the_term_list( $post_id, 'post_tag', '', '; ', '' );
 
 		if ( ! empty( $term_list ) && ! is_wp_error( $term_list ) )
 		{
-			$content = $content . "\n  \n" . (string) strip_tags( $term_list );
+			$content = $content . "\n\n" . (string) strip_tags( $term_list );
 		}//end if
 
-		return $post->post_title ."\n  \n". $post->post_excerpt ."\n  \n". $content;
-	}//end go_oc_content
+		return $post->post_title . "\n\n" . $post->post_excerpt . "\n\n" . $content;
+	}//end go_opencalais_content
 
-	public function update()
-	{
-		if ( ! current_user_can( 'manage_options' ) )
-		{
-			die( 'no access' );
-		}//end if
-
-		if ( ! term_exists( $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'] ) )
-		{
-			wp_insert_term( $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'] );
-			echo 'updated term ';
-		}//end if
-		else
-		{
-			echo 'no updates needed ';
-		}// end else
-	}//end update
-
+	/**
+	 * Add the autotagged term to a given post
+	 */
 	protected function mark_autotagged( $post )
 	{
-		// mark this record as tagged
-		return wp_set_object_terms( $post->ID, $this->config['autotagger']['term'], $this->config['autotagger']['taxonomy'], true );
+		return wp_set_object_terms( $post->ID, go_opencalais()->config( 'autotagger' )['term'], go_opencalais()->slug . '-autotagger', TRUE );
 	}//end mark_autotagged
 }//end class

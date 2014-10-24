@@ -2,7 +2,7 @@
 
 class GO_OpenCalais_Enrich
 {
-	const OC_URL = 'http://api.opencalais.com/tag/rs/enrich';
+	public $api_url = 'http://api.opencalais.com/tag/rs/enrich';
 
 	/**
 	 * The post we're enriching.
@@ -25,11 +25,14 @@ class GO_OpenCalais_Enrich
 		$this->post = $post;
 	}//end __construct
 
+	/**
+	 * Enrich a post (i.e. call OpenCalais and get the suggested tags for the post's content)
+	 */
 	public function enrich()
 	{
-		$content = apply_filters( 'go_oc_content', $this->post->post_content, $this->post->ID, $this->post );
+		$content = apply_filters( 'go_opencalais_content', $this->post->post_title . "\n\n" . $this->post->post_excerpt . "\n\n" . $this->post->post_content, $this->post );
 
-		if ( empty( $content ))
+		if ( empty( $content ) )
 		{
 			return new WP_Error( 'empty-content', 'Cannot enrich empty post', $this->post );
 		}//end if
@@ -37,14 +40,14 @@ class GO_OpenCalais_Enrich
 		$args = array(
 			'body'    => $content,
 			'headers' => array(
-				'X-calais-licenseID' => go_opencalais()->admin()->config['api_key'],
+				'X-calais-licenseID' => go_opencalais()->config( 'api_key' ),
 				'Accept'             => 'application/json',
 				'Content-type'       => 'text/html',
 				'enableMetadataType' => 'SocialTags',
 			),
 		);
 
-		$response         = wp_remote_post( self::OC_URL, $args );
+		$response         = wp_remote_post( $this->api_url, $args );
 		$response_code    = wp_remote_retrieve_response_code( $response );
 		$response_message = wp_remote_retrieve_response_message( $response );
 		$response_body    = wp_remote_retrieve_body( $response );
@@ -67,20 +70,19 @@ class GO_OpenCalais_Enrich
 		}//end elseif
 
 		$this->response_raw = (array) json_decode( $response_body );
-		$this->response     = apply_filters( 'go_oc_response', $this->response_raw, $this->post->ID, $this->post );
+		$this->response     = apply_filters( 'go_opencalais_response', $this->response_raw, $this->post->ID, $this->post );
 	}//end enrich
 
+	/**
+	 * Save OpenCalais resposne to the post meta
+	 */
 	public function save()
 	{
-		$meta = (array) get_post_meta( $this->post->ID, 'go_oc_settings', true );
-
-		if ( empty($meta) )
-		{
-			$meta = array();
-		}//end if
+		$meta = go_opencalais()->get_post_meta( $this->post->ID );
 
 		$meta['enrich']            = json_encode( $this->response );
 		$meta['enrich_unfiltered'] = json_encode( $this->response_raw );
-		update_post_meta( $this->post->ID, 'go_oc_settings', $meta );
+
+		update_post_meta( $this->post->ID, go_opencalais()->post_meta_key, $meta );
 	}//end save
 }//end class

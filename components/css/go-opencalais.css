@@ -1,0 +1,59 @@
+/* @override 
+	http://go.local.gostage.it/wp-content/themes/vip/gigaom5-plugins/go-opencalais/components/css/go-opencalais.css?ver=1 */
+
+.go-opencalais {
+	background-color: #f5f5f5;
+	margin: 0 -12px -12px;
+	padding: 12px 12px 1px;
+	border-top: 1px solid #dddddd;
+}
+
+.go-opencalais-taggroup {
+	margin-bottom: 12px;
+	display: inline-block;
+}
+
+.go-opencalais-refresh {
+	float: right;
+}
+
+.go-opencalais-taglist {
+	margin-bottom: 12px;
+	clear: both;
+}
+
+.go-opencalais-taglist:after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+.go-opencalais-taglist span {
+	margin-right: 15px;
+	line-height: 1.9em;
+	float: left;
+}
+
+.go-opencalais-ignore {
+	cursor: pointer;
+	position: absolute;
+	font-size: 16px;
+	color: #bbbbbb;
+}
+
+.go-opencalais-ignore:hover {
+	color: #ca0813;
+}
+
+.go-opencalais-use {
+	cursor: pointer;
+	margin-left: 15px;
+}
+
+.go-opencalais-ignored-list .go-opencalais-use {
+	margin-left: 0;
+}
+
+.go-opencalais-ignored-list > span > .go-opencalais-ignore {
+	display: none;
+}
