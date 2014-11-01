@@ -28,9 +28,12 @@ class GO_OpenCalais_AutoTagger
 		// Prep mapping for use later
 		$this->mapping = go_opencalais()->config( 'mapping' );
 
+		// get the autotagger config so we don't have to repeatedly call it inside this method
+		$config = go_opencalais()->config( 'autotagger' );
+
 		// any updates to the default threshold?
-		$this->threshold = apply_filters( 'go_opencalais_autotag_threshold', go_opencalais()->config( 'autotagger' )['threshold'] );
-		$posts_per_page  = isset( $_REQUEST['num'] ) ? (int) $_REQUEST['num'] : go_opencalais()->config( 'autotagger' )['num'];
+		$this->threshold = apply_filters( 'go_opencalais_autotag_threshold', $config['threshold'] );
+		$posts_per_page  = isset( $_REQUEST['num'] ) ? (int) $_REQUEST['num'] : $config['num'];
 
 		// sanity check
 		if ( 20 < $posts_per_page )
@@ -49,7 +52,7 @@ class GO_OpenCalais_AutoTagger
 				array(
 					'taxonomy' => go_opencalais()->slug . '-autotagger',
 					'field'    => 'slug',
-					'terms'    => array( go_opencalais()->config( 'autotagger' )['term'] ),
+					'terms'    => array( $config['term'] ),
 					'operator' => 'NOT IN',
 				),
 			),
@@ -244,6 +247,7 @@ class GO_OpenCalais_AutoTagger
 	 */
 	protected function mark_autotagged( $post )
 	{
-		return wp_set_object_terms( $post->ID, go_opencalais()->config( 'autotagger' )['term'], go_opencalais()->slug . '-autotagger', TRUE );
+		$config = go_opencalais()->config( 'autotagger' );
+		return wp_set_object_terms( $post->ID, $config['term'], go_opencalais()->slug . '-autotagger', TRUE );
 	}//end mark_autotagged
 }//end class
