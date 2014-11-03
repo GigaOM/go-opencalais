@@ -54,6 +54,11 @@ Exporting git submodules to SVN
 passthru( "git submodule foreach 'git checkout-index -a -f --prefix=$svn_repo_path/\$path/'" );
 
 echo '
+Copying and reformatting README.md to readme.txt
+';
+passthru( "cat README.md | sed 's/^\#* //' > $svn_repo_path/readme.txt" );
+
+echo '
 Setting svn:ignore properties
 ';
 passthru( "svn propset svn:ignore '" . implode( "\n", $svn_ignore_files ) ."
