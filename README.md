@@ -1,6 +1,6 @@
 # === Gigaom OpenCalais ===
 
-Contributors: abackstrom, methnen, misterbisson
+Contributors: abackstrom, borkweb, methnen, misterbisson, zbtirrell
 
 Tags: bSuite, taxonomies, terms, tag suggestions, opencalais
 
