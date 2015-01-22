@@ -73,8 +73,10 @@ class GO_OpenCalais_Admin
 
 		$script_config = apply_filters( 'go-config', array( 'version' => 1 ), 'go-script-version' );
 
+		$js_min = ( defined( 'GO_DEV' ) && GO_DEV ) ? 'lib' : 'min';
+
 		wp_enqueue_script( 'handlebars' );
-		wp_enqueue_script( go_opencalais()->slug, plugins_url( 'js/go-opencalais.js', __FILE__ ), array( 'jquery' ), $script_config['version'], TRUE );
+		wp_enqueue_script( go_opencalais()->slug, plugins_url( 'js/' . $js_min . '/go-opencalais.js', __FILE__ ), array( 'jquery' ), $script_config['version'], TRUE );
 		wp_enqueue_style( go_opencalais()->slug . '-css', plugins_url( 'css/go-opencalais.css', __FILE__ ), array(), $script_config['version'] );
 		wp_enqueue_style( 'fontawesome' );
 
