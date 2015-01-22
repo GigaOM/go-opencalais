@@ -1,5 +1,5 @@
 {
-	"name"            : "go-waterfall-options",
+	"name"            : "go-opencalais",
 	"version"         : "1.0.0",
 	"devDependencies" : {
 		"grunt"                 : "~0.4.5",
