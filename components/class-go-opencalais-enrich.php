@@ -42,7 +42,7 @@ class GO_OpenCalais_Enrich
 			'headers' => array(
 				'X-calais-licenseID' => go_opencalais()->config( 'api_key' ),
 				'Accept'             => 'application/json',
-				'Content-type'       => 'text/html',
+				'Content-type'       => 'text/txt',
 				'enableMetadataType' => 'SocialTags',
 			),
 		);
